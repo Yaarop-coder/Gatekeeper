@@ -1,0 +1,9 @@
+GET http://localhost:8000/api/register-tenant
+{
+    "company_name": "Google",
+    "name": "Sundar Pichai",
+    "email": "sundar@google.com",
+    "password": "password123"
+}
+
+Accept: application/json
