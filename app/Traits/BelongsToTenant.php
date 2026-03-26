@@ -3,11 +3,13 @@
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Scopes\TenantScope;
 
 trait BelongsToTenant
 {
     protected static function bootBelongsToTenant()
     {
+        static::addGlobalScope(new TenantScope);
         // 1. When creating a new record, automatically attach the tenant_id
         static::creating(function ($model) {
             if (session()->has('tenant_id')) {

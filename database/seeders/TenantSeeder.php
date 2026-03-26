@@ -29,5 +29,19 @@ class TenantSeeder extends Seeder
         'password' => bcrypt('password'),
         'tenant_id' => $tenant2->id,
     ]);
+    // Create the Tenant
+    $tenant = \App\Models\Tenant::create([
+        'id' => 4,
+        'name' => 'Google',
+        'slug' => 'google'
+    ]);
+
+    // Create the User linked to that Tenant
+    \App\Models\User::create([
+        'name' => 'Sundar',
+        'email' => 'sundar@google.com',
+        'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        'tenant_id' => $tenant->id
+    ]);
 }
 }

@@ -10,18 +10,25 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        // This will AUTOMATICALLY only show projects for the current Tenant
-        return Project::all();
+    // 1. Fetch the projects (The Global Scope still filters these!)
+        $projects = \App\Models\Project::all();
+
+    // 2. Return the Blade view instead of JSON
+        return view('projects.index', compact('projects'));
     }
 
+    // 2. Save a new project for the current tenant
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => 'required|string',
-            'description' => 'nullable|string',
+        $request->validate([
+            'name' => 'required|string|max:255',
         ]);
 
-        // This will AUTOMATICALLY attach the tenant_id
-        return Project::create($data);
+        $project = Project::create([
+            'name' => $request->name,
+            'tenant_id' => $request->header('X-Tenant-ID'),
+        ]);
+
+        return response()->json($project, 201);
     }
 }
