@@ -1,15 +1,42 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Projects</h2>
-            <p class="text-gray-500 text-sm">Viewing data for your specific organization.</p>
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Projects</h2>
+        <p class="text-gray-500 text-sm">
+            Logged in as: <span class="font-semibold text-indigo-600">{{ auth()->user()->name }}</span> 
+            (Tenant: {{ auth()->user()->tenant->name ?? 'Default' }})
+        </p>
+    </div>
+
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-400 text-green-700 shadow-sm rounded-r-md">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
         </div>
-        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition">
-            + Create New
-        </button>
+    @endif
+
+    <div class="mb-10 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Create New Project</h3>
+        <form action="{{ route('projects.store') }}" method="POST" class="flex flex-col sm:flex-row gap-3">
+            @csrf
+            <input type="text" name="name" 
+                   class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 border" 
+                   placeholder="Enter project name..." required>
+            <button type="submit" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg transition duration-150 ease-in-out">
+                + Add Project
+            </button>
+        </form>
     </div>
 
     <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">

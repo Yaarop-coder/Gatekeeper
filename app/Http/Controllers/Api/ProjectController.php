@@ -20,15 +20,16 @@ class ProjectController extends Controller
     // 2. Save a new project for the current tenant
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+    ]);
 
-        $project = Project::create([
-            'name' => $request->name,
-            'tenant_id' => $request->header('X-Tenant-ID'),
-        ]);
+    // We do NOT manually set tenant_id here. 
+    // The 'BelongsToTenant' trait handles it automatically!
+    \App\Models\Project::create([
+        'name' => $request->name,
+    ]);
 
-        return response()->json($project, 201);
+    return redirect()->route('projects.index')->with('success', 'Project created!');
     }
 }

@@ -1,25 +1,30 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Api\ProjectController;
-use App\Http\Controllers\AuthController;
-use App\Http\Middleware\IdentifyTenant;
+use App\Http\Controllers\Api\LoginController;
 
-// 1. Guest Routes (Anyone can see these)
+// Public Routes
 Route::get('/', function () {
-    return redirect('/login');
+    return view('welcome');
 });
 
-Route::get('/login', [AuthController::class, 'loginView'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+// Authentication Routes
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
 
-// 2. Protected Routes (Only logged-in users)
-Route::middleware(['auth'])->group(function () {
+// Use the [Controller, 'method'] array syntax to fix the red highlights
+Route::post('/login', [LoginController::class, 'login']);
+
+// Authenticated Routes
+Route::middleware(['web', 'auth'])->group(function () {
     
-    // NOW we apply the IdentifyTenant middleware inside the auth group
-    Route::middleware([IdentifyTenant::class])->group(function () {
-        Route::get('/projects', [ProjectController::class, 'index']);
-    });
+    // Projects Dashboard
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
 
-    Route::post('/logout', [AuthController::class, 'logout']);
+    // Logout
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });

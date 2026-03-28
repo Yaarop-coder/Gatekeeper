@@ -4,37 +4,38 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    public function __invoke(Request $request)
+    /**
+     * Handle the login submission.
+     */
+    public function login(Request $request)
     {
-        $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
-        
-        $user = User::withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
-            ->where('email', $request->email)
-            ->first();
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-        //Check Password
-        if (!$user || ! Hash::check($request->password, $user->password)){
-            throw ValidationException::withMessages([
-                'email' => ['the credentials provided are incorrect'],
-            ]);
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->intended('projects');
         }
 
-        //Create a token named 'auth_token'
-        $token = $user->createToken('auth_token')->plainTextToken;
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match our records.',
+        ])->onlyInput('email');
+    }
 
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
-        ]);
+    /**
+     * Handle logout.
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/login');
     }
 }

@@ -14,7 +14,7 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 1. Check Postman/API Header first
+        // 1. Check for API/Postman Header
         $tenantId = $request->header('X-Tenant-ID');
 
         // 2. If no header, check the Browser Session
@@ -23,7 +23,6 @@ class IdentifyTenant
         }
 
         // 3. If still nothing, but user is logged in, grab it from the User record
-        // We use Auth:: instead of auth() for consistency with your imports
         if (!$tenantId && Auth::check()) {
             $tenantId = Auth::user()->tenant_id;
             session(['tenant_id' => $tenantId]);
@@ -34,10 +33,10 @@ class IdentifyTenant
             config(['app.tenant_id' => $tenantId]);
         }
 
-        // 5. SECURITY: Only block if we aren't on a login/public page
-        if (!$tenantId && !$request->is('login*', 'logout*', 'api/login*')) {
-            return redirect()->route('login');
-        }
+        // 5. SECURITY: Don't redirect if we are ALREADY on the login page
+        if (!$tenantId && !$request->is('login*', 'logout*', 'register*')) {
+        return redirect()->route('login');
+        }   
 
         return $next($request);
     }

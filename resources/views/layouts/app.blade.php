@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gatekeeper v13</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 text-gray-900">
 
@@ -20,8 +20,14 @@
             
             <div class="flex items-center gap-6">
                 <span class="text-sm font-medium text-gray-600">
-                    User: <span class="text-indigo-600">Guest</span>
+                    User: <span class="text-indigo-600">{{ Auth::user()->name ?? 'Guest' }}</span>
                 </span>
+                @auth
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="text-xs text-red-500 hover:underline">Logout</button>
+                    </form>
+                @endauth
             </div>
         </div>
     </nav>
