@@ -34,6 +34,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function tenant()
+{
+    // A user belongs to one tenant
+    return $this->belongsTo(Tenant::class);
+}
 
     // REMOVED: The manual booted() method because BelongsToTenant trait handles it!
 }

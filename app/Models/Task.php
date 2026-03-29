@@ -1,0 +1,18 @@
+<?php
+namespace App\Models;
+
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Model;
+
+class Task extends Model
+{
+    use BelongsToTenant; // Now Tasks are automatically secured too!
+
+    protected $fillable = ['title', 'project_id', 'tenant_id', 'is_completed'];
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+}
+

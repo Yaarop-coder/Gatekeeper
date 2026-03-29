@@ -10,4 +10,9 @@ use App\Traits\BelongsToTenant;
 class Project extends Model
 {
     use BelongsToTenant;
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
 }

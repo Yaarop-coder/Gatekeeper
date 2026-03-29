@@ -55,13 +55,39 @@
                             {{ $project->name }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Active
-                            </span>
-                        </td>
+    @php
+        $total = $project->tasks_count;
+        $completed = $project->completed_tasks_count;
+        $percent = ($total > 0) ? round(($completed / $total) * 100) : 0;
+    @endphp
+    
+    <div class="flex items-center gap-3">
+        <div class="w-full bg-gray-200 rounded-full h-2 max-w-[100px]">
+            <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ $percent }}%"></div>
+        </div>
+        <span class="text-xs font-bold text-gray-600">{{ $percent }}%</span>
+    </div>
+    <p class="text-[10px] text-gray-400 mt-1">{{ $completed }}/{{ $total }} Tasks</p>
+</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="#" class="text-indigo-600 hover:text-indigo-900">View Details</a>
-                        </td>
+    <div class="flex justify-end items-center gap-4">
+        
+        <a href="{{ route('projects.show', $project->id) }}" 
+           class="text-indigo-600 hover:text-indigo-900 font-bold">
+            Details
+        </a>
+
+        <form action="{{ route('projects.destroy', $project->id) }}" method="POST" 
+              onsubmit="return confirm('Are you sure?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="text-red-600 hover:text-red-800 font-bold">
+                Delete
+            </button>
+        </form>
+        
+    </div>
+</td>
                     </tr>
                 @empty
                     <tr>

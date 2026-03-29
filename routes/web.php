@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\TaskController;
 
 // Public Routes
 Route::get('/', function () {
@@ -24,7 +25,13 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Projects Dashboard
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
 
+    
+    Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });

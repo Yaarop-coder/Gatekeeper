@@ -9,13 +9,18 @@ use Illuminate\Http\Request;
 class ProjectController extends Controller
 {
     public function index()
-    {
-    // 1. Fetch the projects (The Global Scope still filters these!)
-        $projects = \App\Models\Project::all();
+{
+    // withCount('tasks') adds a 'tasks_count' variable to every project
+    // withCount(['tasks as completed_tasks_count' => ...]) counts only finished ones
+    $projects = \App\Models\Project::withCount([
+        'tasks',
+        'tasks as completed_tasks_count' => function ($query) {
+            $query->where('is_completed', true);
+        }
+    ])->get();
 
-    // 2. Return the Blade view instead of JSON
-        return view('projects.index', compact('projects'));
-    }
+    return view('projects.index', compact('projects'));
+}
 
     // 2. Save a new project for the current tenant
     public function store(Request $request)
@@ -31,5 +36,22 @@ class ProjectController extends Controller
     ]);
 
     return redirect()->route('projects.index')->with('success', 'Project created!');
+    }
+    public function show(\App\Models\Project $project)
+    {
+    // Load the tasks associated with this project
+        $project->load('tasks');
+
+        return view('projects.show', compact('project'));
+    }
+    public function destroy(\App\Models\Project $project)
+    {
+    // The 'BelongsToTenant' trait automatically protects this!
+    // If Tim (Apple) tries to delete Bill's (Microsoft) project ID, 
+    // Laravel won't even find the record. 404 Error!
+    
+        $project->delete();
+
+        return redirect()->route('projects.index')->with('success', 'Project deleted successfully.');
     }
 }
