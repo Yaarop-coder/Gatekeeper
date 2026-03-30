@@ -32,4 +32,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    Route::post('/notifications/read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+
+        return back();
+    })->name('notifications.read')->middleware('auth');
 });

@@ -81,6 +81,36 @@
                 <span class="w-2 h-6 bg-amber-400 rounded-full"></span>
                 Recent Activity
             </h2>
+            <div class="mt-8 space-y-6">
+    <h2 class="text-xl font-black text-gray-800 flex items-center gap-2">
+        <span class="w-2 h-6 bg-red-500 rounded-full"></span>
+        My Notifications
+    </h2>
+
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <ul class="divide-y divide-gray-50">
+            @forelse($notifications as $notification)
+                <li class="p-4 {{ $notification->read_at ? 'opacity-50' : 'bg-blue-50/30' }}">
+                    <p class="text-sm font-bold text-gray-800">{{ $notification->data['message'] }}</p>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">
+                        {{ $notification->created_at->diffForHumans() }}
+                    </p>
+                </li>
+            @empty
+                <li class="p-8 text-center text-gray-400 text-sm italic">No notifications yet.</li>
+            @endforelse
+        </ul>
+        
+        @if($notifications->count() > 0)
+            <form action="{{ route('notifications.read') }}" method="POST" class="p-4 bg-gray-50 text-center">
+                @csrf
+                <button type="submit" class="text-xs font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest">
+                    Mark All as Read
+                </button>
+            </form>
+        @endif
+    </div>
+</div>
 
             <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                 <ul class="divide-y divide-gray-50">

@@ -42,7 +42,10 @@ class ProjectController extends Controller
             ->take(5)
             ->get();
 
-        return view('projects.index', compact('projects', 'stats', 'activities'));
+        // NEW: Get the 5 most recent notifications
+        $notifications = $user->notifications()->latest()->take(5)->get();
+
+        return view('projects.index', compact('projects', 'stats', 'activities', 'notifications'));
 
     }
 
