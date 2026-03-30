@@ -16,16 +16,15 @@ class ProjectController extends Controller
         $user = auth()->user();
 
         $projects = Project::where('tenant_id', $user->tenant_id)
+            ->with(['tasks']) // Ensure tasks are loaded
             ->withCount([
                 'tasks',
+                // This is the important part:
                 'tasks as completed_tasks_count' => function ($query) {
                     $query->where('is_completed', true);
                 },
-                // NEW: Count only tasks assigned to ME
-                'tasks as my_tasks_count' => function ($query) use ($user) {
-                    $query->where('assigned_to_id', $user->id);
-                },
-            ])->get();
+            ])
+            ->get();
 
         $stats = [
             'total_projects' => $projects->count(),
@@ -46,7 +45,6 @@ class ProjectController extends Controller
         $notifications = $user->notifications()->latest()->take(5)->get();
 
         return view('projects.index', compact('projects', 'stats', 'activities', 'notifications'));
-
     }
 
     // 2. Save a new project for the current tenant

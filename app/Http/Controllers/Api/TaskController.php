@@ -18,19 +18,24 @@ class TaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'priority' => 'required|in:low,medium,high',
-            'due_at' => 'nullable|date',
-            'assigned_to_id' => 'nullable|exists:users,id',
+            'attachment' => 'nullable|file|mimes:jpg,png,pdf,docx|max:2048', // Max 2MB
         ]);
 
-        // Note: tenant_id is handled by your BelongsToTenant trait automatically!
+        $attachmentPath = null;
+
+        if ($request->hasFile('attachment')) {
+            // This stores the file in storage/app/public/attachments
+            $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+        }
+
         $project->tasks()->create([
             'title' => $request->title,
             'priority' => $request->priority,
-            'due_at' => $request->due_at,
+            'attachment_path' => $attachmentPath,
             'assigned_to_id' => $request->assigned_to_id,
         ]);
 
-        return back()->with('success', 'Task added successfully!');
+        return back()->with('success', 'Task created with attachment!');
     }
 
     /**

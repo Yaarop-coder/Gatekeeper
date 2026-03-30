@@ -10,11 +10,12 @@ class Task extends Model
     use BelongsToTenant; // Now Tasks are automatically secured too!
 
     protected $fillable = [
-        'title',
-        'project_id',
         'tenant_id',
-        'is_completed',
+        'project_id',
+        'title',
         'priority',
+        'attachment_path',
+        'is_completed',
         'due_at',
         'assigned_to_id',
     ];
