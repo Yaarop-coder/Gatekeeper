@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -12,23 +13,37 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        // 1. Get projects with counts
-        $projects = Project::withCount([
-            'tasks',
-            'tasks as completed_tasks_count' => function ($query) {
-                $query->where('is_completed', true);
-            },
-        ])->get();
+        $user = auth()->user();
 
-        // 2. Calculate Global Stats (Gatekeeper handles the tenant filtering)
+        $projects = Project::where('tenant_id', $user->tenant_id)
+            ->withCount([
+                'tasks',
+                'tasks as completed_tasks_count' => function ($query) {
+                    $query->where('is_completed', true);
+                },
+                // NEW: Count only tasks assigned to ME
+                'tasks as my_tasks_count' => function ($query) use ($user) {
+                    $query->where('assigned_to_id', $user->id);
+                },
+            ])->get();
+
         $stats = [
             'total_projects' => $projects->count(),
-            'total_tasks' => Task::count(),
-            'completed_tasks' => Task::where('is_completed', true)->count(),
+            'total_tasks' => Task::where('tenant_id', $user->tenant_id)->count(),
+            'my_pending_tasks' => Task::where('assigned_to_id', $user->id)
+                ->where('is_completed', false)
+                ->count(),
         ];
 
-        // 3. PASS BOTH TO THE VIEW
-        return view('projects.index', compact('projects', 'stats'));
+        // Fetch the 5 most recent activities for this tenant
+        $activities = Activity::with('user')
+            ->where('tenant_id', $user->tenant_id)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('projects.index', compact('projects', 'stats', 'activities'));
+
     }
 
     // 2. Save a new project for the current tenant
