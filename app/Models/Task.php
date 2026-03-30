@@ -14,8 +14,9 @@ class Task extends Model
         'project_id',
         'tenant_id',
         'is_completed',
-        'priority', // Add this
-        'due_at',   // Add this
+        'priority',
+        'due_at',
+        'assigned_to_id',
     ];
 
     protected $casts = [
@@ -26,5 +27,10 @@ class Task extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_to_id');
     }
 }

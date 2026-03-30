@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -48,17 +49,21 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        // 1. Security Check: Compare the tenant IDs
-        // Make sure you use '->user()' (property) not '->user()()' (method)
-        if ($project->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'You do not have permission to view this project.');
+        // 1. Get the user once to avoid multiple calls
+        $user = auth()->user();
+
+        // 2. Security: Ensure user exists and matches the project's tenant
+        if (! $user || $project->tenant_id !== $user->tenant_id) {
+            abort(403, 'Unauthorized access to this project.');
         }
 
-        // 2. Load the tasks relationship so they appear on the page
-        $project->load('tasks');
+        // 3. Eager load tasks AND their assigned users to avoid "N+1" database issues
+        $project->load(['tasks.assignedUser']);
 
-        // 3. Return the view
-        return view('projects.show', compact('project'));
+        // 4. Get the team members (all users belonging to the same tenant)
+        $team = User::where('tenant_id', $user->tenant_id)->get();
+
+        return view('projects.show', compact('project', 'team'));
     }
 
     public function destroy(Project $project)
