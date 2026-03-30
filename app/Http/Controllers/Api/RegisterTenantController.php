@@ -23,7 +23,7 @@ class RegisterTenantController extends Controller
 
         // 2. The Transaction (The All-or-Nothing block)
         return DB::transaction(function () use ($data) {
-            
+
             // Create the Tenant
             $tenant = Tenant::create([
                 'name' => $data['company_name'],
@@ -41,7 +41,7 @@ class RegisterTenantController extends Controller
             return response()->json([
                 'message' => 'Tenant and User created successfully!',
                 'tenant' => $tenant,
-                'user' => $user
+                'user' => $user,
             ], 201);
         });
     }

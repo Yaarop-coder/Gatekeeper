@@ -9,12 +9,12 @@ use Illuminate\Database\Eloquent\Scope;
 class TenantScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
-{
-    // Use the config we just set in the middleware
-    $tenantId = config('app.tenant_id');
+    {
+        // Use the config we just set in the middleware
+        $tenantId = config('app.tenant_id');
 
-    if ($tenantId) {
-        $builder->where('tenant_id', $tenantId);
+        if ($tenantId) {
+            $builder->where('tenant_id', $tenantId);
+        }
     }
-}
 }

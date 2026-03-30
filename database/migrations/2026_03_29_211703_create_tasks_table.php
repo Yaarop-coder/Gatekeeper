@@ -10,16 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('tasks', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('project_id')->constrained()->onDelete('cascade');
-        $table->foreignId('tenant_id')->constrained(); // THE GATEKEEPER COLUMN
-        $table->string('title');
-        $table->boolean('is_completed')->default(false);
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tenant_id')->constrained(); // THE GATEKEEPER COLUMN
+            $table->string('title');
+            $table->boolean('is_completed')->default(false);
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

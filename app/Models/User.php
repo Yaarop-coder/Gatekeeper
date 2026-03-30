@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Traits\BelongsToTenant;
 
-/** * We'll use the traditional protected properties for compatibility 
+/** * We'll use the traditional protected properties for compatibility
  * with the Trait and the rest of the setup for now.
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, BelongsToTenant;
+    use BelongsToTenant, HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -34,11 +34,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
     public function tenant()
-{
-    // A user belongs to one tenant
-    return $this->belongsTo(Tenant::class);
-}
+    {
+        // A user belongs to one tenant
+        return $this->belongsTo(Tenant::class);
+    }
 
     // REMOVED: The manual booted() method because BelongsToTenant trait handles it!
 }

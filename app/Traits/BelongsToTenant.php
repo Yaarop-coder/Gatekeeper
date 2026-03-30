@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Scopes\TenantScope;
+use Illuminate\Database\Eloquent\Builder;
 
 trait BelongsToTenant
 {

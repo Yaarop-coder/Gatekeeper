@@ -18,12 +18,12 @@ class IdentifyTenant
         $tenantId = $request->header('X-Tenant-ID');
 
         // 2. If no header, check the Browser Session
-        if (!$tenantId) {
+        if (! $tenantId) {
             $tenantId = session('tenant_id');
         }
 
         // 3. If still nothing, but user is logged in, grab it from the User record
-        if (!$tenantId && Auth::check()) {
+        if (! $tenantId && Auth::check()) {
             $tenantId = Auth::user()->tenant_id;
             session(['tenant_id' => $tenantId]);
         }
@@ -34,9 +34,9 @@ class IdentifyTenant
         }
 
         // 5. SECURITY: Don't redirect if we are ALREADY on the login page
-        if (!$tenantId && !$request->is('login*', 'logout*', 'register*')) {
-        return redirect()->route('login');
-        }   
+        if (! $tenantId && ! $request->is('login*', 'logout*', 'register*')) {
+            return redirect()->route('login');
+        }
 
         return $next($request);
     }

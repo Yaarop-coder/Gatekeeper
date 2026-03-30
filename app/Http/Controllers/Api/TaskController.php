@@ -10,28 +10,35 @@ use Illuminate\Http\Request;
 class TaskController extends Controller
 {
     public function store(Request $request, Project $project)
-{
-    $request->validate(['title' => 'required|string|max:255']);
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'priority' => 'required|in:low,medium,high',
+            'due_at' => 'nullable|date',
+        ]);
 
-    // Notice: NO tenant_id here. 
-    // The Trait sees the Task is being created and "whispers" the tenant_id into the database for you.
-    $project->tasks()->create([
-        'title' => $request->title,
-    ]);
+        $project->tasks()->create([
+            'title' => $request->title,
+            'priority' => $request->priority,
+            'due_at' => $request->due_at,
+        ]);
 
-    return back()->with('success', 'Task added!');
-}
-public function toggle(Task $task)
-{
-    $task->update([
-        'is_completed' => !$task->is_completed
-    ]);
+        return back()->with('success', 'Task added with priority!');
+    }
 
-    return back();
-}
-public function destroy(Task $task)
-{
-    $task->delete();
-    return back()->with('success', 'Task removed.');
-}
+    public function toggle(Task $task)
+    {
+        $task->update([
+            'is_completed' => ! $task->is_completed,
+        ]);
+
+        return back();
+    }
+
+    public function destroy(Task $task)
+    {
+        $task->delete();
+
+        return back()->with('success', 'Task removed.');
+    }
 }

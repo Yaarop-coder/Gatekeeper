@@ -1,100 +1,113 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Projects</h2>
-        <p class="text-gray-500 text-sm">
-            Logged in as: <span class="font-semibold text-indigo-600">{{ auth()->user()->name }}</span> 
-            (Tenant: {{ auth()->user()->tenant->name ?? 'Default' }})
-        </p>
-    </div>
+<div class="container mx-auto pb-12">
 
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-400 text-green-700 shadow-sm rounded-r-md">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium">{{ session('success') }}</p>
-                </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Projects</p>
+                <p class="text-4xl font-black text-gray-900 mt-2">{{ $stats['total_projects'] }}</p>
+            </div>
+            <div class="mt-4 h-1 w-12 bg-indigo-500 rounded-full"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Global Tasks</p>
+                <p class="text-4xl font-black text-gray-900 mt-2">{{ $stats['total_tasks'] }}</p>
+            </div>
+            <div class="mt-4 h-1 w-12 bg-blue-500 rounded-full"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Success Rate</p>
+                @php
+                    $rate = ($stats['total_tasks'] > 0) ? round(($stats['completed_tasks'] / $stats['total_tasks']) * 100) : 0;
+                @endphp
+                <p class="text-4xl font-black text-indigo-600 mt-2">{{ $rate }}%</p>
+            </div>
+            <div class="mt-4 w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+                <div class="bg-indigo-600 h-full" style="width: {{ $rate }}%"></div>
             </div>
         </div>
-    @endif
+    </div>
 
-    <div class="mb-10 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Create New Project</h3>
-        <form action="{{ route('projects.store') }}" method="POST" class="flex flex-col sm:flex-row gap-3">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Project Dashboard</h1>
+            <p class="text-gray-500">Managing assets for <span class="font-bold text-indigo-600">{{ auth()->user()->tenant->name }}</span></p>
+        </div>
+
+        <form action="{{ route('projects.store') }}" method="POST" class="flex gap-2 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
             @csrf
-            <input type="text" name="name" 
-                   class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 border" 
-                   placeholder="Enter project name..." required>
-            <button type="submit" 
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg transition duration-150 ease-in-out">
-                + Add Project
+            <input type="text" name="name" required placeholder="New Project Name..." 
+                   class="border-none focus:ring-0 text-sm px-4 py-2 w-48 md:w-64">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-6 rounded-lg transition-all active:scale-95">
+                + Create
             </button>
         </form>
     </div>
 
-    <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+    <div class="bg-white shadow-xl border border-gray-100 rounded-2xl overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project Name</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Project Name</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Progress</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Tasks</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-gray-100">
                 @forelse($projects as $project)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ $project->name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-    @php
-        $total = $project->tasks_count;
-        $completed = $project->completed_tasks_count;
-        $percent = ($total > 0) ? round(($completed / $total) * 100) : 0;
-    @endphp
-    
-    <div class="flex items-center gap-3">
-        <div class="w-full bg-gray-200 rounded-full h-2 max-w-[100px]">
-            <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ $percent }}%"></div>
-        </div>
-        <span class="text-xs font-bold text-gray-600">{{ $percent }}%</span>
-    </div>
-    <p class="text-[10px] text-gray-400 mt-1">{{ $completed }}/{{ $total }} Tasks</p>
-</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-    <div class="flex justify-end items-center gap-4">
-        
-        <a href="{{ route('projects.show', $project->id) }}" 
-           class="text-indigo-600 hover:text-indigo-900 font-bold">
-            Details
-        </a>
-
-        <form action="{{ route('projects.destroy', $project->id) }}" method="POST" 
-              onsubmit="return confirm('Are you sure?');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="text-red-600 hover:text-red-800 font-bold">
-                Delete
-            </button>
-        </form>
-        
-    </div>
-</td>
-                    </tr>
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900">{{ $project->name }}</div>
+                        <div class="text-xs text-gray-400">ID: #{{ $project->id }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        @php
+                            $total = $project->tasks_count;
+                            $done = $project->completed_tasks_count;
+                            $p = ($total > 0) ? round(($done / $total) * 100) : 0;
+                        @endphp
+                        <div class="flex items-center gap-3">
+                            <div class="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-indigo-600 h-full transition-all duration-500" style="width: {{ $p }}%"></div>
+                            </div>
+                            <span class="text-xs font-black text-gray-600">{{ $p }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold uppercase">
+                            {{ $done }} / {{ $total }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end items-center gap-4">
+                            <a href="{{ route('projects.show', $project->id) }}" class="text-indigo-600 hover:text-indigo-900 font-bold transition">
+                                Details
+                            </a>
+                            <form action="{{ route('projects.destroy', $project->id) }}" method="POST" onsubmit="return confirm('Delete this project?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-400 hover:text-red-600 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
                 @empty
-                    <tr>
-                        <td colspan="3" class="px-6 py-12 text-center text-gray-500 italic">
-                            No projects found for this tenant. The Gatekeeper is working!
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-gray-500 italic">
+                        No projects found. Create your first one above!
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
