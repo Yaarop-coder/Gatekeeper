@@ -12,40 +12,44 @@ use Illuminate\Http\Request;
 class ProjectController extends Controller
 {
     public function index()
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $projects = Project::where('tenant_id', $user->tenant_id)
-            ->with(['tasks']) // Ensure tasks are loaded
-            ->withCount([
-                'tasks',
-                // This is the important part:
-                'tasks as completed_tasks_count' => function ($query) {
-                    $query->where('is_completed', true);
-                },
-            ])
-            ->get();
+    // 1. Fetch Projects with Counts and Nested Comments
+    $projects = Project::where('tenant_id', $user->tenant_id)
+        ->withCount([
+            'tasks', 
+            'tasks as tasks_done_count' => function ($query) {
+                $query->where('is_completed', true);
+            }
+        ])
+        ->with(['tasks' => function($query) {
+            $query->with(['comments.user'])->latest();
+        }])
+        ->get();
 
-        $stats = [
-            'total_projects' => $projects->count(),
-            'total_tasks' => Task::where('tenant_id', $user->tenant_id)->count(),
-            'my_pending_tasks' => Task::where('assigned_to_id', $user->id)
-                ->where('is_completed', false)
-                ->count(),
-        ];
+    // 2. Define the missing $stats variable
+    $stats = [
+        'total_projects' => $projects->count(),
+        'my_pending_tasks' => \App\Models\Task::where('tenant_id', $user->tenant_id)
+            ->where('is_completed', false)
+            ->count(),
+    ];
 
-        // Fetch the 5 most recent activities for this tenant
-        $activities = Activity::with('user')
-            ->where('tenant_id', $user->tenant_id)
-            ->latest()
-            ->take(5)
-            ->get();
+    // 3. Define the missing $activities variable (adjust based on your Activity model)
+    // If you don't have an Activity model yet, use an empty collection to prevent errors
+    $activities = \App\Models\Activity::where('tenant_id', $user->tenant_id)
+        ->with('user')
+        ->latest()
+        ->take(5)
+        ->get();
 
-        // NEW: Get the 5 most recent notifications
-        $notifications = $user->notifications()->latest()->take(5)->get();
+    // 4. Fetch Notifications
+    $notifications = $user->notifications()->latest()->take(5)->get();
 
-        return view('projects.index', compact('projects', 'stats', 'activities', 'notifications'));
-    }
+    // Now compact() will find everything it needs!
+    return view('projects.index', compact('projects', 'stats', 'activities', 'notifications'));
+}
 
     // 2. Save a new project for the current tenant
     public function store(Request $request)
@@ -83,13 +87,13 @@ class ProjectController extends Controller
     }
 
     public function destroy(Project $project)
-    {
-        // The 'BelongsToTenant' trait automatically protects this!
-        // If Tim (Apple) tries to delete Bill's (Microsoft) project ID,
-        // Laravel won't even find the record. 404 Error!
-
-        $project->delete();
-
-        return redirect()->route('projects.index')->with('success', 'Project deleted successfully.');
+{
+    // Safety check: ensure the user owns this project's tenant
+    if ($project->tenant_id !== auth()->user()->tenant_id) {
+        abort(403);
     }
+
+    $project->delete();
+    return back()->with('success', 'Project deleted!');
+}
 }

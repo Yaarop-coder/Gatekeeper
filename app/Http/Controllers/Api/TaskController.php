@@ -56,9 +56,12 @@ class TaskController extends Controller
      * Delete a task.
      */
     public function destroy(Task $task)
-    {
-        $task->delete();
-
-        return back()->with('success', 'Task removed.');
+{
+    if ($task->tenant_id !== auth()->user()->tenant_id) {
+        abort(403);
     }
+
+    $task->delete();
+    return back()->with('success', 'Task removed!');
+}
 }
