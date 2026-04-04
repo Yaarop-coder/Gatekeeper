@@ -10,58 +10,116 @@ use Illuminate\Http\Request;
 class TaskController extends Controller
 {
     /**
-     * Store a new task.
-     * The TaskObserver will automatically log "created task: {title}"
+     * Create a new task for a project.
      */
     public function store(Request $request, Project $project)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'priority' => 'required|in:low,medium,high',
-            'attachment' => 'nullable|file|mimes:jpg,png,pdf,docx|max:2048', // Max 2MB
-        ]);
-
-        $attachmentPath = null;
-
-        if ($request->hasFile('attachment')) {
-            // This stores the file in storage/app/public/attachments
-            $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+        // 1. Security Check
+        if ($project->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
         }
 
-        $project->tasks()->create([
-            'title' => $request->title,
-            'priority' => $request->priority,
-            'attachment_path' => $attachmentPath,
-            'assigned_to_id' => $request->assigned_to_id,
+        // 2. Validation
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'due_at' => 'nullable|date',
+            'priority' => 'required|in:low,medium,high',
         ]);
 
-        return back()->with('success', 'Task created with attachment!');
+        // 3. Create Task via Relationship
+        $project->tasks()->create([
+            'tenant_id' => $project->tenant_id,
+            'title' => $validated['title'],
+            'due_at' => $validated['due_at'],
+            'priority' => $validated['priority'],
+            'status' => 'todo',
+            'is_completed' => false,
+        ]);
+
+        return back()->with('success', 'Task added to '.$project->name);
     }
 
     /**
-     * Toggle the completion status.
-     * The TaskObserver will automatically log "completed/reopened task: {title}"
+     * Handle the Drawer Update (Title, Description, etc.)
+     */
+    public function update(Request $request, Task $task)
+    {
+        if ($task->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'sometimes|string',
+            'priority' => 'sometimes|string',
+            'due_at' => 'nullable|date',
+        ]);
+
+        $task->update($validated);
+
+        return back()->with('success', 'Task updated successfully!');
+    }
+
+    /**
+     * Update Task Status (Todo/Active/Review/Done)
+     */
+    public function updateStatus(Request $request, Task $task)
+    {
+        if ($task->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $task->update([
+            'status' => $request->status,
+            'is_completed' => ($request->status === 'done'),
+        ]);
+
+        return back()->with('success', 'Status updated.');
+    }
+
+    /**
+     * Quick toggle for completion checkbox
      */
     public function toggle(Task $task)
     {
-        // Simple flip of the boolean
+        if ($task->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
         $task->update([
             'is_completed' => ! $task->is_completed,
+            'status' => ! $task->is_completed ? 'done' : 'todo',
         ]);
 
-        return back()->with('success', 'Task status updated!');
+        return back();
     }
 
     /**
-     * Delete a task.
+     * Assign a user to the task
      */
-    public function destroy(Task $task)
-{
-    if ($task->tenant_id !== auth()->user()->tenant_id) {
-        abort(403);
+    public function assign(Request $request, Task $task)
+    {
+        if ($task->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $task->update(['assigned_to' => $request->user_id]);
+
+        return back()->with('success', 'Assignee updated!');
     }
 
-    $task->delete();
-    return back()->with('success', 'Task removed!');
-}
+    /**
+     * Delete the task
+     */
+    public function destroy(Task $task)
+    {
+        if ($task->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $task->delete();
+
+        return back()->with('success', 'Task deleted.');
+    }
 }

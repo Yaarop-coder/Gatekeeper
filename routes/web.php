@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return view('welcome');
+    return auth()->check() ? redirect()->route('projects.index') : view('welcome');
 });
 
 Route::get('/login', function () {
@@ -27,28 +28,36 @@ Route::post('/login', [LoginController::class, 'login']);
 */
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard / Projects
+    // --- Projects ---
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
-    // Tasks (Nested under projects)
-    // This matches route('projects.tasks.store', $project) in your Blade file
+    // --- Tasks ---
+    // Store task under project
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
 
-    Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
+    // Main Update (Used by the Task Drawer for description/title)
+    Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+
+    // Status & Assignment Updates
+    Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
+    Route::patch('/tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
+
+    // Delete Task
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
-    // Notifications
+    // --- Comments ---
+    Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('comments.store');
+
+    // --- Notifications ---
     Route::post('/notifications/read', function () {
         auth()->user()->unreadNotifications->markAsRead();
 
         return back();
     })->name('notifications.read');
 
-    // Logout
+    // --- Auth ---
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-    Route::post('/tasks/{task}/comments', [App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
 });

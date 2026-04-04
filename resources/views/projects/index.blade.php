@@ -1,180 +1,218 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-10">
-    
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-        <div>
-            <h1 class="text-4xl font-black text-gray-900 tracking-tighter">Project Dashboard</h1>
-            <p class="text-gray-500 font-medium">Manage your team's progress and attachments.</p>
-        </div>
+<div x-data="{ 
+    drawerOpen: false, 
+    activeTask: null,
+    openTask(task) {
+        this.activeTask = task;
+        this.drawerOpen = true;
+    }
+}" class="relative">
 
-        <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm w-full md:w-auto">
-            <form action="{{ route('projects.store') }}" method="POST" class="flex gap-2">
-                @csrf
-                <input type="text" name="name" placeholder="New Project Name..." required 
-                    class="border-gray-100 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full md:w-64">
-                <button type="submit" class="bg-gray-900 text-white px-6 py-2 rounded-xl text-sm font-black hover:bg-black transition">
-                    Create
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased">
         
-        <div class="lg:col-span-4 space-y-8">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">My Tasks</p>
-                    <p class="text-3xl font-black text-indigo-600 mt-1">{{ $stats['my_pending_tasks'] ?? 0 }}</p>
+        <nav class="bg-white border-b border-slate-200 px-8 py-4 mb-8">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <span class="bg-indigo-600 text-white p-2 rounded-lg font-black tracking-tighter text-xl shadow-sm">GK</span>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-800">Gatekeeper <span class="text-slate-400 font-medium text-sm ml-2 italic">v3.0</span></h1>
                 </div>
-                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Projects</p>
-                    <p class="text-3xl font-black text-gray-900 mt-1">{{ $stats['total_projects'] ?? 0 }}</p>
-                </div>
+                
+                <form action="{{ route('projects.store') }}" method="POST" class="flex items-center gap-2">
+                    @csrf
+                    <input type="text" name="name" placeholder="Start new project..." required class="bg-slate-50 border-slate-200 rounded-full text-sm px-4 py-2 focus:ring-2 focus:ring-indigo-500 transition-all w-48 focus:w-64 border outline-none">
+                    <button type="submit" class="bg-slate-900 text-white h-9 w-9 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-colors shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
+                </form>
             </div>
+        </nav>
 
-            <div class="bg-gray-900 rounded-3xl p-6 shadow-xl shadow-gray-200">
-                <h2 class="text-white font-black text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Activity
-                </h2>
-                <div class="space-y-6">
-                    @forelse($activities as $activity)
-                        <div class="flex gap-3">
-                            <div class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-400">
-                                {{ substr($activity->user->name ?? 'U', 0, 1) }}
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-300"><span class="font-bold text-white">{{ $activity->user->name ?? 'User' }}</span> {{ $activity->description }}</p>
-                                <p class="text-[9px] text-gray-500 font-bold uppercase mt-1">{{ $activity->created_at->diffForHumans() }}</p>
-                            </div>
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-12 gap-8">
+            
+            <aside class="col-span-12 lg:col-span-3 space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 text-center">Workspace Overview</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-3 bg-slate-50 rounded-xl">
+                            <p class="text-2xl font-black text-slate-800">{{ $stats['total_projects'] ?? 0 }}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">Projects</p>
                         </div>
+                        <div class="text-center p-3 bg-indigo-50 rounded-xl">
+                            <p class="text-2xl font-black text-indigo-600">{{ $stats['my_pending_tasks'] ?? 0 }}</p>
+                            <p class="text-[9px] text-indigo-400 font-bold uppercase">Active</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-2">Recent Events</h3>
+                    @forelse($activities as $activity)
+                    <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm">
+                        <p class="text-[11px] text-slate-600 leading-tight"><strong>{{ $activity->user->name ?? 'User' }}</strong> {{ $activity->description }}</p>
+                        <span class="text-[9px] text-slate-400 font-medium italic mt-1 block">{{ $activity->created_at->diffForHumans() }}</span>
+                    </div>
                     @empty
-                        <p class="text-gray-500 text-xs italic">No recent activity.</p>
+                    <p class="text-xs text-slate-400 italic ml-2">No activity logged.</p>
                     @endforelse
                 </div>
-            </div>
-        </div>
+            </aside>
 
-        <div class="lg:col-span-8 space-y-6">
-            @forelse($projects as $project)
-                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 group/project">
+            <main class="col-span-12 lg:col-span-9 space-y-8 pb-20">
+                @forelse($projects as $project)
+                <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
                     
-                    <div class="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-r from-white to-gray-50/50 gap-4">
+                    <header class="px-8 py-6 flex justify-between items-center border-b border-slate-100 bg-slate-50/30">
                         <div class="flex items-center gap-4">
-                            <div>
-                                <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ $project->name }}</h2>
-                                <p class="text-xs text-gray-400 font-bold uppercase mt-1">
-                                    {{ $project->tasks_count }} Tasks • {{ $project->tasks_done_count }} Done
-                                </p>
-                            </div>
-                            <form action="{{ route('projects.destroy', $project) }}" method="POST" onsubmit="return confirm('Delete this project and all its tasks?')">
+                            <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">{{ $project->name }}</h2>
+                            <form action="{{ route('projects.destroy', $project) }}" method="POST" onsubmit="return confirm('Delete this project?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="text-gray-200 hover:text-red-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                <button class="text-slate-300 hover:text-red-500 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </form>
                         </div>
-                        
-                        <div class="w-full md:w-48">
-                            @php
-                                $total = (int) $project->tasks_count;
-                                $done = (int) $project->tasks_done_count;
-                                $percentage = $total > 0 ? round(($done / $total) * 100) : 0;
-                            @endphp
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] font-black uppercase text-gray-400">Progress</span>
-                                <span class="text-[10px] font-black text-indigo-600">{{ $percentage }}%</span>
+
+                        @php
+                            $total = (int) $project->tasks_count;
+                            $done = (int) $project->tasks_done_count;
+                            $pct = $total > 0 ? round(($done / $total) * 100) : 0;
+                        @endphp
+                        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-100 shadow-sm">
+                            <div class="w-20 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: {{ $pct }}%"></div>
                             </div>
-                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-indigo-500 h-full rounded-full transition-all duration-700" style="width: {{ $percentage }}%"></div>
-                            </div>
+                            <span class="text-[10px] font-black text-slate-600">{{ $pct }}% Complete</span>
                         </div>
-                    </div>
+                    </header>
 
-                    <div class="p-6 space-y-4">
+                    <div class="divide-y divide-slate-50">
                         @foreach($project->tasks as $task)
-                            <div class="border border-gray-50 rounded-2xl p-4 bg-white shadow-sm group/task relative">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center gap-3">
-                                        <form action="{{ route('tasks.toggle', $task) }}" method="POST">
-                                            @csrf @method('PATCH')
-                                            <button type="submit" class="w-5 h-5 rounded border-2 {{ $task->is_completed ? 'bg-green-500 border-green-500' : 'border-gray-200' }} flex items-center justify-center">
-                                                @if($task->is_completed) <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> @endif
-                                            </button>
-                                        </form>
-                                        
-                                        <span class="font-bold text-gray-800 {{ $task->is_completed ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</span>
-                                        
-                                        @if($task->attachment_path)
-                                            <a href="{{ asset('storage/' . $task->attachment_path) }}" target="_blank" class="text-indigo-400 hover:text-indigo-600 transition">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                                            </a>
-                                        @endif
-                                    </div>
-
-                                    <form action="{{ route('tasks.destroy', $task) }}" method="POST">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-gray-300 hover:text-red-400 transition-opacity opacity-0 group-hover/task:opacity-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                        </button>
+                        <div class="group px-8 py-5 hover:bg-slate-50/40 transition-all flex items-start justify-between">
+                            <div class="flex flex-col gap-2 w-full">
+                                <div class="flex items-center gap-4">
+                                    <form action="{{ route('tasks.update-status', $task) }}" method="POST">
+                                        @csrf @method('PATCH')
+                                        <select onchange="this.form.submit()" name="status" class="bg-slate-100 border-none p-1 text-[9px] font-black uppercase rounded cursor-pointer {{ $task->status == 'done' ? 'text-emerald-600 bg-emerald-50' : 'text-indigo-600' }}">
+                                            <option value="todo" {{ $task->status == 'todo' ? 'selected' : '' }}>Todo</option>
+                                            <option value="in_progress" {{ $task->status == 'in_progress' ? 'selected' : '' }}>Active</option>
+                                            <option value="review" {{ $task->status == 'review' ? 'selected' : '' }}>Review</option>
+                                            <option value="done" {{ $task->status == 'done' ? 'selected' : '' }}>Done</option>
+                                        </select>
                                     </form>
-                                </div>
 
-                                <div class="ml-8 space-y-2 border-l-2 border-gray-50 pl-4">
-                                    @foreach($task->comments as $comment)
-                                        <div class="flex items-start gap-2">
-                                            <div class="w-5 h-5 bg-indigo-50 rounded-full flex items-center justify-center text-[8px] font-black text-indigo-500 uppercase">{{ substr($comment->user->name, 0, 1) }}</div>
-                                            <div class="bg-gray-50 p-2 rounded-xl flex-1">
-                                                <p class="text-[10px] text-gray-600 leading-snug">{{ $comment->body }}</p>
-                                            </div>
+                                    <button @click="openTask({{ json_encode($task) }})" 
+                                            class="text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors text-left {{ $task->status == 'done' ? 'line-through text-slate-300' : '' }}">
+                                        {{ $task->title }}
+                                    </button>
+
+                                    @if($task->due_at)
+                                        @php
+                                            $isOverdue = $task->due_at->isPast() && $task->status !== 'done';
+                                            $isSoon = !$isOverdue && ($task->due_at->isToday() || $task->due_at->diffInDays() < 2) && $task->status !== 'done';
+                                        @endphp
+                                        <div class="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border
+                                            {{ $isOverdue ? 'bg-red-50 text-red-500 border-red-100' : ($isSoon ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100') }}">
+                                            {{ $task->due_at->format('M d') }}
                                         </div>
-                                    @endforeach
-                                    
-                                    <form action="{{ route('comments.store', $task) }}" method="POST" class="flex gap-2 pt-2">
-                                        @csrf
-                                        <input type="text" name="body" placeholder="Add a note..." required class="flex-1 border-none bg-transparent text-[10px] focus:ring-0 p-0 placeholder-gray-300">
-                                        <button type="submit" class="text-indigo-400 hover:text-indigo-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                        </button>
+                                    @endif
+
+                                    <form action="{{ route('tasks.assign', $task) }}" method="POST" class="ml-auto md:ml-0">
+                                        @csrf @method('PATCH')
+                                        <select name="user_id" onchange="this.form.submit()" class="bg-transparent border-none text-[10px] text-slate-400 focus:ring-0 cursor-pointer hover:text-indigo-500 font-medium">
+                                            <option value="">Unassigned</option>
+                                            @foreach($users as $user)
+                                                <option value="{{ $user->id }}" {{ $task->assigned_to == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </form>
                                 </div>
                             </div>
+
+                            <form action="{{ route('tasks.destroy', $task) }}" method="POST" class="opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                                @csrf @method('DELETE')
+                                <button class="text-slate-200 hover:text-red-400 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </form>
+                        </div>
                         @endforeach
                     </div>
 
-                    <div class="p-6 bg-gray-50/50 border-t border-gray-50">
-                        <form action="{{ route('projects.tasks.store', $project) }}" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row gap-3">
+                    <footer class="bg-slate-50/50 px-8 py-5 border-t border-slate-100">
+                        <form action="{{ route('projects.tasks.store', $project) }}" method="POST" class="flex flex-col md:flex-row gap-4 items-center">
                             @csrf
-                            <input type="text" name="title" placeholder="What needs to be done?" required class="flex-1 border-gray-200 rounded-xl text-sm focus:ring-indigo-500">
-                            <div class="flex gap-2">
-                                <select name="priority" class="border-gray-200 rounded-xl text-sm bg-white px-3">
+                            <input type="text" name="title" placeholder="+ Add task..." required class="flex-1 w-full bg-white border-slate-200 rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-indigo-500/20 border">
+                            <div class="flex items-center gap-3 w-full md:w-auto">
+                                <input type="date" name="due_at" class="bg-white border-slate-200 rounded-xl text-xs text-slate-500 py-2.5 px-3 border">
+                                <select name="priority" required class="bg-white border-slate-200 rounded-xl text-xs text-slate-500 py-2.5 px-3 border outline-none">
                                     <option value="low">Low</option>
                                     <option value="medium" selected>Medium</option>
                                     <option value="high">High</option>
                                 </select>
-                                <label class="cursor-pointer bg-white border border-gray-200 rounded-xl px-3 flex items-center hover:bg-gray-50 transition">
-                                    <input type="file" name="attachment" class="hidden">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                                </label>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-black hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
-                                    Add Task
-                                </button>
+                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-xs font-black shadow-lg">Save</button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            @empty
-                <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                    </div>
-                    <p class="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No Projects Found</p>
-                    <p class="text-gray-500 text-sm mt-1">Start by creating a new project above.</p>
-                </div>
-            @endforelse
+                    </footer>
+                </section>
+                @empty
+                    <div class="text-center py-20 bg-white border border-dashed rounded-3xl text-slate-400 italic">No projects found. Create one above!</div>
+                @endforelse
+            </main>
         </div>
     </div>
-</div>
-@endsection
+
+    <div x-show="drawerOpen" x-cloak x-transition @click="drawerOpen = false" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
+
+    <aside x-show="drawerOpen" x-cloak
+           x-transition:enter="transition ease-out duration-300 transform"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transition ease-in duration-200 transform"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full"
+           class="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl z-50 overflow-y-auto border-l border-slate-200">
+        
+        <div x-show="activeTask" class="p-8">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-indigo-500" x-text="'Task #' + (activeTask ? activeTask.id : '')"></span>
+                    <h2 class="text-2xl font-extrabold text-slate-800 leading-tight mt-1" x-text="activeTask ? activeTask.title : ''"></h2>
+                </div>
+                <button @click="drawerOpen = false" class="text-slate-400 hover:text-slate-600 text-2xl font-light">&times;</button>
+            </div>
+
+            <form x-show="activeTask" :action="activeTask ? `{{ url('tasks') }}/${activeTask.id}` : '#'" method="POST" class="space-y-6">
+                @csrf @method('PATCH')
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Description / Notes</label>
+                    <textarea name="description" x-model="activeTask.description" rows="8" 
+                              class="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-indigo-500/20 border min-h-[250px] outline-none" 
+                              placeholder="Describe this task..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Priority</label>
+                        <select name="priority" x-model="activeTask.priority" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-sm">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Due Date</label>
+                        <input type="date" name="due_at" x-model="activeTask.due_at" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-indigo-600 transition shadow-lg">
+                    Update Task Details
+                </button>
+            </form>
+        </div>
+    </aside>
+
+</div> @endsection

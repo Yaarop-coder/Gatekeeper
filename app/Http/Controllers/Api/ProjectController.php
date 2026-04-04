@@ -11,89 +11,99 @@ use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
+    /**
+     * Display the main dashboard.
+     */
     public function index()
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    // 1. Fetch Projects with Counts and Nested Comments
-    $projects = Project::where('tenant_id', $user->tenant_id)
-        ->withCount([
-            'tasks', 
-            'tasks as tasks_done_count' => function ($query) {
-                $query->where('is_completed', true);
-            }
-        ])
-        ->with(['tasks' => function($query) {
-            $query->with(['comments.user'])->latest();
-        }])
-        ->get();
+        // 1. Get all team members for the assignment dropdowns
+        $users = User::where('tenant_id', $user->tenant_id)->get();
 
-    // 2. Define the missing $stats variable
-    $stats = [
-        'total_projects' => $projects->count(),
-        'my_pending_tasks' => \App\Models\Task::where('tenant_id', $user->tenant_id)
-            ->where('is_completed', false)
-            ->count(),
-    ];
+        // 2. Fetch Projects with Progress Counts
+        $projects = Project::where('tenant_id', $user->tenant_id)
+            ->withCount([
+                'tasks',
+                'tasks as tasks_done_count' => function ($query) {
+                    $query->where('status', 'done'); // Updated to match your status pipeline
+                },
+            ])
+            ->with(['tasks' => function ($query) {
+                // Eager load everything needed for the task rows
+                $query->with(['comments.user', 'user'])->latest();
+            }])
+            ->get();
 
-    // 3. Define the missing $activities variable (adjust based on your Activity model)
-    // If you don't have an Activity model yet, use an empty collection to prevent errors
-    $activities = \App\Models\Activity::where('tenant_id', $user->tenant_id)
-        ->with('user')
-        ->latest()
-        ->take(5)
-        ->get();
+        // 3. Calculate Stats for the Sidebar
+        $stats = [
+            'total_projects' => $projects->count(),
+            'my_pending_tasks' => Task::where('tenant_id', $user->tenant_id)
+                ->where('status', '!=', 'done')
+                ->count(),
+        ];
 
-    // 4. Fetch Notifications
-    $notifications = $user->notifications()->latest()->take(5)->get();
+        // 4. Fetch the Activity Feed (The "Live Pulse")
+        // The Global Scope on Activity model handles the tenant filtering automatically!
+        $activities = Activity::with('user')
+            ->latest()
+            ->take(10)
+            ->get();
 
-    // Now compact() will find everything it needs!
-    return view('projects.index', compact('projects', 'stats', 'activities', 'notifications'));
-}
+        // 5. Fetch Notifications for the user
+        $notifications = $user->notifications()->latest()->take(5)->get();
 
-    // 2. Save a new project for the current tenant
+        return view('projects.index', compact('projects', 'stats', 'activities', 'notifications', 'users'));
+    }
+
+    /**
+     * Save a new project.
+     */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        // We do NOT manually set tenant_id here.
-        // The 'BelongsToTenant' trait handles it automatically!
+        // Explicitly setting tenant_id ensures no "Field 'tenant_id' doesn't have a default value" errors
         Project::create([
             'name' => $request->name,
+            'tenant_id' => auth()->user()->tenant_id,
         ]);
 
         return redirect()->route('projects.index')->with('success', 'Project created!');
     }
 
+    /**
+     * View a single project detail.
+     */
     public function show(Project $project)
     {
-        // 1. Get the user once to avoid multiple calls
         $user = auth()->user();
 
-        // 2. Security: Ensure user exists and matches the project's tenant
-        if (! $user || $project->tenant_id !== $user->tenant_id) {
+        // Security check
+        if ($project->tenant_id !== $user->tenant_id) {
             abort(403, 'Unauthorized access to this project.');
         }
 
-        // 3. Eager load tasks AND their assigned users to avoid "N+1" database issues
-        $project->load(['tasks.assignedUser']);
-
-        // 4. Get the team members (all users belonging to the same tenant)
+        // Load tasks and the team
+        $project->load(['tasks.user', 'tasks.comments.user']);
         $team = User::where('tenant_id', $user->tenant_id)->get();
 
         return view('projects.show', compact('project', 'team'));
     }
 
+    /**
+     * Remove a project.
+     */
     public function destroy(Project $project)
-{
-    // Safety check: ensure the user owns this project's tenant
-    if ($project->tenant_id !== auth()->user()->tenant_id) {
-        abort(403);
-    }
+    {
+        if ($project->tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
 
-    $project->delete();
-    return back()->with('success', 'Project deleted!');
-}
+        $project->delete();
+
+        return back()->with('success', 'Project deleted!');
+    }
 }
