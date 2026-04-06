@@ -26,25 +26,26 @@ class ProjectController extends Controller
             ->withCount([
                 'tasks',
                 'tasks as tasks_done_count' => function ($query) {
-                    $query->where('status', 'done'); // Updated to match your status pipeline
+                    $query->where('status', 'done');
                 },
             ])
             ->with(['tasks' => function ($query) {
-                // Eager load everything needed for the task rows
-                $query->with(['comments.user', 'user'])->latest();
+                // UPDATED: Added 'assignee' to the eager load list
+                // This allows $task->assignee->initials to work without extra database hits
+                $query->with(['comments.user', 'user', 'assignee'])->latest();
             }])
             ->get();
 
         // 3. Calculate Stats for the Sidebar
         $stats = [
             'total_projects' => $projects->count(),
-            'my_pending_tasks' => Task::where('tenant_id', $user->tenant_id)
-                ->where('status', '!=', 'done')
-                ->count(),
+            'todo' => Task::where('tenant_id', $user->tenant_id)->where('status', 'todo')->count(),
+            'active' => Task::where('tenant_id', $user->tenant_id)->where('status', 'in_progress')->count(),
+            'review' => Task::where('tenant_id', $user->tenant_id)->where('status', 'review')->count(),
+            'done' => Task::where('tenant_id', $user->tenant_id)->where('status', 'done')->count(),
         ];
 
-        // 4. Fetch the Activity Feed (The "Live Pulse")
-        // The Global Scope on Activity model handles the tenant filtering automatically!
+        // 4. Fetch the Activity Feed
         $activities = Activity::with('user')
             ->latest()
             ->take(10)

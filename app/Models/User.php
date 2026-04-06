@@ -41,5 +41,17 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class);
     }
 
-    // REMOVED: The manual booted() method because BelongsToTenant trait handles it!
+    public function getInitialsAttribute()
+    {
+        // Split the name by spaces (e.g., "Steve Jobs" -> ["Steve", "Jobs"])
+        $words = explode(' ', $this->name);
+
+        if (count($words) >= 2) {
+            // Take first letter of first word and first letter of second word
+            return strtoupper(substr($words[0], 0, 1).substr($words[1], 0, 1));
+        }
+
+        // If it's just one name, take the first two letters
+        return strtoupper(substr($this->name, 0, 2));
+    }
 }

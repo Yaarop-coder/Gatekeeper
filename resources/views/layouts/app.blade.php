@@ -77,6 +77,39 @@
     <footer class="mt-20 py-10 border-t border-gray-100 text-center">
         <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">&copy; {{ date('Y') }} Gatekeeper Project Management</p>
     </footer>
+<div x-data="{ 
+        show: false, 
+        message: '',
+        type: 'success',
+        display(msg, timeout = 3000) {
+            this.message = msg;
+            this.show = true;
+            setTimeout(() => this.show = false, timeout);
+        }
+    }"
+    @notify.window="display($event.detail.message)"
+    x-show="show"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 transform translate-y-4"
+    x-transition:enter-end="opacity-100 transform translate-y-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 transform translate-y-0"
+    x-transition:leave-end="opacity-0 transform translate-y-4"
+    class="fixed bottom-5 right-5 z-[100] pointer-events-none"
+    x-cloak>
+    
+    <div class="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
+        <div class="bg-emerald-500 h-2 w-2 rounded-full animate-pulse"></div>
+        <p class="text-sm font-bold tracking-wide" x-text="message"></p>
+    </div>
+</div>
 
+@if(session('success'))
+    <script>
+        window.onload = () => {
+            window.dispatchEvent(new CustomEvent('notify', { detail: { message: "{{ session('success') }}" } }));
+        }
+    </script>
+@endif
 </body>
 </html>
