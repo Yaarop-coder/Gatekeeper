@@ -10,6 +10,9 @@
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="antialiased">
@@ -111,5 +114,6 @@
         }
     </script>
 @endif
+@stack('scripts')
 </body>
 </html>
