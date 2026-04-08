@@ -1,63 +1,39 @@
 <?php
 
-use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
+// Redirect the landing page to projects if logged in
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('projects.index') : view('welcome');
+    return auth()->check() ? redirect('/projects') : view('welcome');
 });
 
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// The Breeze Dashboard
+Route::get('/dashboard', function () {
+    return redirect()->route('projects.index');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::post('/login', [LoginController::class, 'login']);
+// --- GATEKEEPER CORE ROUTES ---
+Route::middleware('auth')->group(function () {
+    // Projects
+    Route::resource('projects', ProjectController::class);
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth'])->group(function () {
+    // Tasks (Fixed the name here to match your Blade component)
+    Route::post('projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
+    Route::patch('tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
 
-    // --- Projects ---
-    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
-    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
-    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
-    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    // Comments
+    Route::post('tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
 
-    // --- Tasks ---
-    // Store task under project
-    Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
-
-    // Main Update (Used by the Task Drawer for description/title)
-    Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
-
-    // Status & Assignment Updates
-    Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
-    Route::patch('/tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
-
-    // Delete Task
-    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-
-    // --- Comments ---
-    Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('comments.store');
-
-    // --- Notifications ---
-    Route::post('/notifications/read', function () {
-        auth()->user()->unreadNotifications->markAsRead();
-
-        return back();
-    })->name('notifications.read');
-
-    // --- Auth ---
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    // Profile (Breeze Default)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+require __DIR__.'/auth.php';

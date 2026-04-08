@@ -18,43 +18,26 @@ class ProjectController extends Controller
     {
         $user = auth()->user();
 
-        // 1. Get all team members for the assignment dropdowns
         $users = User::where('tenant_id', $user->tenant_id)->get();
 
-        // 2. Fetch Projects with Progress Counts
+        // 1. ADD THIS LINE to get the projects
         $projects = Project::where('tenant_id', $user->tenant_id)
-            ->withCount([
-                'tasks',
-                'tasks as tasks_done_count' => function ($query) {
-                    $query->where('status', 'done');
-                },
-            ])
-            ->with(['tasks' => function ($query) {
-                // UPDATED: Added 'assignee' to the eager load list
-                // This allows $task->assignee->initials to work without extra database hits
-                $query->with(['comments.user', 'user', 'assignee'])->latest();
-            }])
+            ->with('tasks') // This allows the component to see the tasks and calculate progress
             ->get();
 
-        // 3. Calculate Stats for the Sidebar
         $stats = [
-            'total_projects' => $projects->count(),
             'todo' => Task::where('tenant_id', $user->tenant_id)->where('status', 'todo')->count(),
             'active' => Task::where('tenant_id', $user->tenant_id)->where('status', 'in_progress')->count(),
             'review' => Task::where('tenant_id', $user->tenant_id)->where('status', 'review')->count(),
             'done' => Task::where('tenant_id', $user->tenant_id)->where('status', 'done')->count(),
         ];
 
-        // 4. Fetch the Activity Feed
-        $activities = Activity::with('user')
-            ->latest()
-            ->take(10)
-            ->get();
+        $activities = Activity::whereHas('user', function ($q) use ($user) {
+            $q->where('tenant_id', $user->tenant_id);
+        })->with('user')->latest()->take(10)->get();
 
-        // 5. Fetch Notifications for the user
-        $notifications = $user->notifications()->latest()->take(5)->get();
-
-        return view('projects.index', compact('projects', 'stats', 'activities', 'notifications', 'users'));
+        // 2. ADD 'projects' to the compact() list
+        return view('projects.index', compact('stats', 'activities', 'users', 'projects'));
     }
 
     /**
