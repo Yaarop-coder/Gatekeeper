@@ -145,6 +145,51 @@ new class extends Component
                 </footer>
             </section>
         </div>
+        {{-- Board View --}}
+        <div x-show="viewMode === 'board'" x-cloak class="flex flex-col gap-12">
+    @foreach($projects as $project)
+        <div class="space-y-4">
+            <h2 class="text-xl font-extrabold text-slate-800 ml-2">{{ $project->name }}</h2>
+            
+            {{-- This line makes it scrollable on small screens but wide on desktop --}}
+            <div class="flex overflow-x-auto pb-6 gap-4 snap-x">
+                @foreach(['todo' => 'To Do', 'in_progress' => 'Active', 'review' => 'Review', 'done' => 'Done'] as $status => $label)
+                    <div class="min-w-[300px] md:w-1/4 flex-shrink-0 snap-start">
+                        <div class="flex items-center justify-between mb-4 px-2">
+                            <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $label }}</h3>
+                        </div>
+
+                        {{-- The Card Container - Added space-y-4 for vertical gap --}}
+                        <div x-sortable 
+                             data-status="{{ $status }}" 
+                             class="flex flex-col gap-4 p-3 rounded-2xl bg-slate-50/50 border-2 border-dashed border-transparent min-h-[500px]">
+                            
+                            @foreach($project->tasks->where('status', $status) as $task)
+                                <div data-id="{{ $task->id }}" 
+                                     @click="openTask({{ json_encode($task) }})"
+                                     class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition-all cursor-grab active:cursor-grabbing flex flex-col min-h-[120px]">
+                                    
+                                    <p class="text-sm font-bold text-slate-700 leading-relaxed mb-4">{{ $task->title }}</p>
+                                    
+                                    <div class="flex items-center justify-between mt-auto pt-3 border-t border-slate-50">
+                                        <span class="text-[9px] font-black uppercase px-2 py-1 rounded-lg {{ $task->priority === 'high' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500' }}">
+                                            {{ $task->priority }}
+                                        </span>
+                                        @if($task->due_at)
+                                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
+                                                {{ \Carbon\Carbon::parse($task->due_at)->format('d M') }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endforeach
+</div>
     @empty
         <div class="text-center py-20 bg-white border border-dashed rounded-3xl text-slate-400 italic shadow-sm">
             <p>No projects found.</p>

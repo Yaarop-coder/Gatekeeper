@@ -1,40 +1,37 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <title>Gatekeeper v3.5</title>
-
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,800&display=swap" rel="stylesheet" />
-
+    {{-- ... your meta tags and vite scripts ... --}}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.min.js"></script>
-    
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <style>
-        [x-cloak] { display: none !important; }
-    </style>
-    @livewireStyles
 </head>
-<body class="bg-[#f1f5f9] font-sans antialiased">
-    @yield('content')
-        <div class="min-h-screen">
-        @auth
-        
-        @endauth
+<body class="bg-[#f8fafc]">
+    {{-- PERMANENT HEADER --}}
+    <nav class="bg-white border-b border-slate-200 px-8 py-4 mb-8">
+        <div class="max-w-[98%] mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <span class="bg-indigo-600 text-white p-2 rounded-lg font-black tracking-tighter text-xl shadow-sm">GK</span>
+                <h1 class="text-xl font-bold tracking-tight text-slate-800">Gatekeeper <span class="text-slate-400 font-medium text-sm ml-2 italic">v3.5</span></h1>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <form action="{{ route('projects.store') }}" method="POST" class="flex items-center gap-2">
+                    @csrf
+                    <input type="text" name="name" placeholder="Start new project..." required class="bg-slate-50 border-slate-200 rounded-full text-sm px-4 py-2 w-48 border outline-none">
+                    <button type="submit" class="bg-slate-900 text-white h-9 w-9 rounded-full flex items-center justify-center hover:bg-indigo-600 transition-all">+</button>
+                </form>
 
-        <main>
-            @yield('content')
-            {{ $slot ?? '' }} 
-        </main>
-    </div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    {{-- MAIN CONTENT INJECTION --}}
+    @yield('content')
 
     @stack('scripts')
-    @livewireScripts
 </body>
 </html>

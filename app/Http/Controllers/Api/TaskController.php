@@ -65,18 +65,22 @@ class TaskController extends Controller
      * Update Task Status (Todo/Active/Review/Done)
      */
     public function updateStatus(Request $request, Task $task)
-    {
-        if ($task->tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
-        }
-
-        $task->update([
-            'status' => $request->status,
-            'is_completed' => ($request->status === 'done'),
-        ]);
-
-        return back()->with('success', 'Status updated.');
+{
+    // Security: Ensure the user owns the task's tenant
+    if ($task->tenant_id !== auth()->user()->tenant_id) {
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
+
+    $request->validate([
+        'status' => 'required|in:todo,in_progress,review,done'
+    ]);
+
+    $task->update([
+        'status' => $request->status
+    ]);
+
+    return response()->json(['message' => 'Task updated successfully']);
+}
 
     /**
      * Quick toggle for completion checkbox
@@ -108,6 +112,7 @@ class TaskController extends Controller
 
         return back()->with('success', 'Assignee updated!');
     }
+    
 
     /**
      * Delete the task
@@ -122,4 +127,5 @@ class TaskController extends Controller
 
         return back()->with('success', 'Task deleted.');
     }
+    
 }
