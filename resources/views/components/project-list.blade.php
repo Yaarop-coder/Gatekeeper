@@ -1,36 +1,3 @@
-<?php
-
-use Livewire\Volt\Component;
-use App\Models\Project;
-use App\Models\User;
-
-new class extends Component
-{
-    // This is the "Logic" part. It runs before the page loads.
-    protected $listeners = ['taskUpdated' => '$refresh'];
-
-    public function with()
-    {
-        $user = auth()->user();
-        return [
-            'users' => User::where('tenant_id', $user->tenant_id)->get(),
-            'projects' => Project::where('tenant_id', $user->tenant_id)
-                ->withCount([
-                    'tasks',
-                    'tasks as tasks_done_count' => function ($query) {
-                        $query->where('status', 'done');
-                    },
-                ])
-                ->with(['tasks' => function ($query) {
-                    $query->with(['comments.user', 'assignee'])->latest();
-                }])
-                ->get(),
-        ];
-    }
-};
-?>
-{{-- Remove the PHP Volt Logic at the top if it's still there, and use this: --}}
-
 <div x-data="{ 
     search: '', 
     viewMode: 'list', 
@@ -71,25 +38,26 @@ new class extends Component
 
     @forelse($projects as $project)
         @php
-            // Calculate progress manually since we are in a standard Blade component
             $total = $project->tasks->count();
             $completed = $project->tasks->where('status', 'done')->count();
             $percent = $total > 0 ? round(($completed / $total) * 100) : 0;
         @endphp
 
+        {{-- List View Section --}}
         <div x-show="viewMode === 'list'">
             <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                <header class="px-8 py-6 border-b border-slate-100 bg-slate-50/30">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">{{ $project->name }}</h2>
-                            <form action="{{ route('projects.destroy', $project) }}" method="POST" onsubmit="return confirm('Delete project?')">
-                                @csrf @method('DELETE')
-                                <button class="text-slate-300 hover:text-red-500 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            </form>
-                        </div>
+    <header class="px-8 py-6 border-b border-slate-100 bg-slate-50/30">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">{{ $project->name }}</h2>
+                
+                <form action="{{ route('projects.destroy', $project) }}" method="POST" onsubmit="return confirm('Delete project?')">
+                    @csrf @method('DELETE')
+                    <button class="text-slate-300 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </form>
+            </div>
 
                         <div class="flex items-center gap-6">
                             <div class="flex flex-col items-end gap-1">
@@ -110,48 +78,63 @@ new class extends Component
                 </header>
 
                 <div class="divide-y divide-slate-50">
-                    @foreach($project->tasks as $task)
-                         <div x-show="(search === '' || '{{ strtolower($task->title) }}'.includes(search.toLowerCase())) && 
-                                     (showCompleted || '{{ $task->status }}' !== 'done') &&
-                                     (filterPriority === 'all' || '{{ $task->priority }}' === filterPriority)"
-                             class="group px-8 py-5 hover:bg-slate-50/40 transition-all flex items-center justify-between">
-                            
-                            <div class="flex items-center gap-4 flex-1">
-                                <form action="{{ route('tasks.update-status', $task) }}" method="POST">
-                                    @csrf @method('PATCH')
-                                    <select onchange="this.form.submit()" name="status" class="bg-slate-100 border-none p-1 text-[9px] font-black uppercase rounded cursor-pointer {{ $task->status == 'done' ? 'text-emerald-600 bg-emerald-50' : 'text-indigo-600' }}">
-                                        <option value="todo" {{ $task->status == 'todo' ? 'selected' : '' }}>Todo</option>
-                                        <option value="in_progress" {{ $task->status == 'in_progress' ? 'selected' : '' }}>Active</option>
-                                        <option value="review" {{ $task->status == 'review' ? 'selected' : '' }}>Review</option>
-                                        <option value="done" {{ $task->status == 'done' ? 'selected' : '' }}>Done</option>
-                                    </select>
-                                </form>
-                                <button @click="openTask({{ json_encode($task) }})" 
-                                        class="text-sm font-semibold text-slate-700 hover:text-indigo-600 {{ $task->status == 'done' ? 'line-through text-slate-300' : '' }}">
-                                    {{ $task->title }}
-                                </button>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+    @foreach($project->tasks as $task)
+        <div class="group flex items-center justify-between p-4 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
+            
+            <div class="flex items-center gap-4">
+                {{-- Status and Title --}}
+                <span class="text-[10px] font-black uppercase px-2 py-1 rounded bg-slate-100 text-slate-500">{{ $task->status }}</span>
+                <h4 @click="openTask({{ $task->toJson() }})" class="text-sm font-bold text-slate-700 cursor-pointer">{{ $task->title }}</h4>
+            </div>
 
-                {{-- Add Task Inline Form --}}
-                <footer class="px-8 py-4 bg-slate-50/50">
-                    <form action="{{ route('tasks.store', $project) }}" method="POST" class="flex gap-2">
+            <div class="flex items-center gap-6">
+                {{-- Priority and Date --}}
+                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded {{ $task->priority === 'high' ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400' }}">
+                    {{ $task->priority }}
+                </span>
+
+                {{-- THE TASK DELETE FORM BELONGS HERE --}}
+                <form action="{{ route('tasks.destroy', $task) }}" method="POST" 
+                      onsubmit="return confirm('Delete this task?')" 
+                      class="opacity-0 group-hover:opacity-100 transition-opacity">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="text-slate-300 hover:text-red-500 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endforeach
+</div>
+
+                <footer class="p-4 bg-slate-50/50 border-t border-slate-100">
+                    <form action="{{ route('tasks.store', $project->id) }}" method="POST" class="flex flex-wrap md:flex-nowrap items-center gap-3">
                         @csrf
-                        <input type="text" name="title" placeholder="Add a task to this project..." class="flex-1 bg-white border-slate-200 rounded-xl px-4 py-2 text-sm outline-none border focus:ring-2 focus:ring-indigo-500/10">
-                        <button type="submit" class="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">Add</button>
+                        <input type="hidden" name="project_id" value="{{ $project->id }}">
+                        
+                        <input type="text" name="title" placeholder="Add a task to this project..." required 
+                               class="flex-1 min-w-[200px] bg-white border-slate-200 rounded-xl text-sm px-4 py-2 border outline-none focus:ring-2 focus:ring-indigo-500/20">
+
+                        <select name="priority" class="bg-white border-slate-200 rounded-xl text-[10px] font-bold uppercase px-3 py-2 border outline-none cursor-pointer">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+
+                        <input type="date" name="due_at" 
+                               class="bg-white border-slate-200 rounded-xl text-[10px] font-bold px-3 py-2 border outline-none">
+
+                        <button type="submit" class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 transition-all shadow-sm">
+                            Add
+                        </button>
                     </form>
                 </footer>
             </section>
         </div>
-        {{-- Board View --}}
-        <div x-show="viewMode === 'board'" x-cloak class="flex flex-col gap-12">
-    @foreach($projects as $project)
-        <div class="space-y-4">
+
+        {{-- Board View Section --}}
+        <div x-show="viewMode === 'board'" x-cloak class="space-y-4 mb-12">
             <h2 class="text-xl font-extrabold text-slate-800 ml-2">{{ $project->name }}</h2>
-            
-            {{-- This line makes it scrollable on small screens but wide on desktop --}}
             <div class="flex overflow-x-auto pb-6 gap-4 snap-x">
                 @foreach(['todo' => 'To Do', 'in_progress' => 'Active', 'review' => 'Review', 'done' => 'Done'] as $status => $label)
                     <div class="min-w-[300px] md:w-1/4 flex-shrink-0 snap-start">
@@ -159,15 +142,23 @@ new class extends Component
                             <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $label }}</h3>
                         </div>
 
-                        {{-- The Card Container - Added space-y-4 for vertical gap --}}
                         <div x-sortable 
                              data-status="{{ $status }}" 
                              class="flex flex-col gap-4 p-3 rounded-2xl bg-slate-50/50 border-2 border-dashed border-transparent min-h-[500px]">
                             
                             @foreach($project->tasks->where('status', $status) as $task)
                                 <div data-id="{{ $task->id }}" 
-                                     @click="openTask({{ json_encode($task) }})"
+                                     @click="openTask({{ $task->toJson() }})"
                                      class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition-all cursor-grab active:cursor-grabbing flex flex-col min-h-[120px]">
+
+                                     <form action="{{ route('tasks.destroy', $task) }}" method="POST" 
+          onsubmit="return confirm('Delete task?')" 
+          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        @csrf @method('DELETE')
+        <button type="submit" class="text-slate-300 hover:text-red-500">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </form>
                                     
                                     <p class="text-sm font-bold text-slate-700 leading-relaxed mb-4">{{ $task->title }}</p>
                                     
@@ -176,7 +167,7 @@ new class extends Component
                                             {{ $task->priority }}
                                         </span>
                                         @if($task->due_at)
-                                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
+                                            <span class="text-[10px] font-bold uppercase tracking-tighter {{ strtolower($task->priority) === 'high' ? 'text-red-500' : 'text-indigo-500' }}">
                                                 {{ \Carbon\Carbon::parse($task->due_at)->format('d M') }}
                                             </span>
                                         @endif
@@ -188,8 +179,7 @@ new class extends Component
                 @endforeach
             </div>
         </div>
-    @endforeach
-</div>
+
     @empty
         <div class="text-center py-20 bg-white border border-dashed rounded-3xl text-slate-400 italic shadow-sm">
             <p>No projects found.</p>

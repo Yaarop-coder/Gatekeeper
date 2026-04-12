@@ -3,7 +3,6 @@
     {{-- We also removed the outer div and the white card div because x-guest-layout already provides them --}}
     
     <div class="text-center mb-8">
-        <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg font-black tracking-tighter text-sm">GK</span>
         <h2 class="text-2xl font-black text-slate-800 tracking-tight mt-4">Welcome Back</h2>
         <p class="text-slate-400 text-sm font-medium">Please sign in to your account</p>
     </div>
@@ -27,7 +26,7 @@
         
         {{-- ... button and footer ... --}}
         <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-indigo-600 transition shadow-xl shadow-indigo-100 uppercase text-xs tracking-widest">
-            Login to Dashboard
+            {{ __('Sign In') }}
         </button>
     </form>
 </x-guest-layout>

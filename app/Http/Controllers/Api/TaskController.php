@@ -22,8 +22,9 @@ class TaskController extends Controller
         // 2. Validation
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'due_at' => 'nullable|date|after_or_equal:today',
+            'project_id' => 'required|exists:projects,id',
             'priority' => 'required|in:low,medium,high',
+            'due_at' => 'nullable|date',
         ]);
 
         // 3. Create Task via Relationship
@@ -66,20 +67,29 @@ class TaskController extends Controller
      */
     public function updateStatus(Request $request, Task $task)
 {
-    // Security: Ensure the user owns the task's tenant
+    // Security check (Keep this!)
     if ($task->tenant_id !== auth()->user()->tenant_id) {
-        return response()->json(['error' => 'Unauthorized'], 403);
+        return $request->wantsJson() 
+            ? response()->json(['error' => 'Unauthorized'], 403) 
+            : abort(403);
     }
 
     $request->validate([
-        'status' => 'required|in:todo,in_progress,review,done'
+        'status' => 'required|in:todo,in_progress,review,done',
     ]);
 
     $task->update([
-        'status' => $request->status
+        'status' => $request->status,
     ]);
 
-    return response()->json(['message' => 'Task updated successfully']);
+    // SMART RESPONSE:
+    // If it's a drag-and-drop (JS), send JSON. 
+    // If it's a dropdown click (Form), redirect back to the board.
+    if ($request->wantsJson()) {
+        return response()->json(['message' => 'Task updated successfully']);
+    }
+
+    return back()->with('success', 'Status updated!');
 }
 
     /**
@@ -112,7 +122,6 @@ class TaskController extends Controller
 
         return back()->with('success', 'Assignee updated!');
     }
-    
 
     /**
      * Delete the task
@@ -127,5 +136,4 @@ class TaskController extends Controller
 
         return back()->with('success', 'Task deleted.');
     }
-    
 }
