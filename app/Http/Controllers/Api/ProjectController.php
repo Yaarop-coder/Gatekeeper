@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class ProjectController extends Controller
 {
@@ -15,30 +16,46 @@ class ProjectController extends Controller
      * Display the main dashboard.
      */
     public function index()
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
+    $tenantId = $user->tenant_id;
 
-        $users = User::where('tenant_id', $user->tenant_id)->get();
+    $users = User::where('tenant_id', $tenantId)->get();
 
-        // 1. ADD THIS LINE to get the projects
-        $projects = Project::where('tenant_id', $user->tenant_id)
-            ->with('tasks') // This allows the component to see the tasks and calculate progress
-            ->get();
+    // Fetch projects with tasks pre-loaded
+    $projects = Project::where('tenant_id', $tenantId)
+        ->with('tasks') 
+        ->get();
 
-        $stats = [
-            'todo' => Task::where('tenant_id', $user->tenant_id)->where('status', 'todo')->count(),
-            'active' => Task::where('tenant_id', $user->tenant_id)->where('status', 'in_progress')->count(),
-            'review' => Task::where('tenant_id', $user->tenant_id)->where('status', 'review')->count(),
-            'done' => Task::where('tenant_id', $user->tenant_id)->where('status', 'done')->count(),
-        ];
+    // OPTIMIZED STATS: Use the already fetched projects to count statuses
+    // This saves 4 database queries!
+    $allTasks = $projects->pluck('tasks')->flatten();
+    
+    $stats = [
+        'todo'   => $allTasks->where('status', 'todo')->count(),
+        'active' => $allTasks->where('status', 'in_progress')->count(),
+        'review' => $allTasks->where('status', 'review')->count(),
+        'done'   => $allTasks->where('status', 'done')->count(),
+    ];
 
-        $activities = Activity::whereHas('user', function ($q) use ($user) {
-            $q->where('tenant_id', $user->tenant_id);
-        })->with('user')->latest()->take(10)->get();
+    $activities = Activity::whereHas('user', function ($q) use ($tenantId) {
+        $q->where('tenant_id', $tenantId);
+    })->with('user')->latest()->take(10)->get();
 
-        // 2. ADD 'projects' to the compact() list
-        return view('projects.index', compact('stats', 'activities', 'users', 'projects'));
+    // FETCH THE API DATA
+    try {
+        // We add a timeout so if the API is slow, your dashboard doesn't hang forever
+        $response = Http::timeout(3)->get('https://zenquotes.io/api/random');
+        $quoteData = $response->json();
+        $quote = $quoteData[0]['q'] ?? 'Stay focused and keep building.';
+        $author = $quoteData[0]['a'] ?? 'Gemini';
+    } catch (\Exception $e) {
+        $quote = 'Focus on the journey, not the destination.';
+        $author = 'Proverb';
     }
+
+    return view('projects.index', compact('stats', 'activities', 'users', 'projects', 'quote', 'author'));
+}
 
     /**
      * Save a new project.

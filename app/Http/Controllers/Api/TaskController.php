@@ -6,39 +6,47 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class TaskController extends Controller
 {
-    /**
-     * Create a new task for a project.
-     */
     public function store(Request $request, Project $project)
-    {
-        // 1. Security Check
-        if ($project->tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
-        }
-
-        // 2. Validation
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'project_id' => 'required|exists:projects,id',
-            'priority' => 'required|in:low,medium,high',
-            'due_at' => 'nullable|date',
-        ]);
-
-        // 3. Create Task via Relationship
-        $project->tasks()->create([
-            'tenant_id' => $project->tenant_id,
-            'title' => $validated['title'],
-            'due_at' => $validated['due_at'],
-            'priority' => $validated['priority'],
-            'status' => 'todo',
-            'is_completed' => false,
-        ]);
-
-        return back()->with('success', 'Task added to '.$project->name);
+{
+    // 1. Security Check
+    if ($project->tenant_id !== auth()->user()->tenant_id) {
+        abort(403);
     }
+
+    // 2. Validation
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'priority' => 'required|in:low,medium,high',
+        'due_at' => 'nullable|date',
+    ]);
+
+    // 3. Create Task via Relationship
+    $task = $project->tasks()->create([
+        'title' => $validated['title'],
+        'priority' => $validated['priority'],
+        'status' => 'todo',
+        'due_at' => $validated['due_at'],
+        'tenant_id' => auth()->user()->tenant_id,
+    ]);
+
+    // 4. API INTEGRATION (Discord Notification)
+    if ($task->priority === 'high') {
+        try {
+            Http::post(config('services.discord.webhook_url'), [
+                'content' => "🔥 **New High Priority Task!**\n**Project:** {$project->name}\n**Task:** {$task->title}\n**Due:** " . ($task->due_at ?? 'No date set'),
+            ]);
+        } catch (\Exception $e) {
+            // We catch the error so the app doesn't crash if Discord is down.
+            // You could log this error if you wanted: \Log::error($e->getMessage());
+        }
+    }
+
+    return back()->with('success', 'Task created!');
+}
 
     /**
      * Handle the Drawer Update (Title, Description, etc.)

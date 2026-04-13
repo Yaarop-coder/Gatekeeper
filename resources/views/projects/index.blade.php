@@ -1,6 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
+
+<div class="mb-6 p-4 bg-white dark:bg-slate-800 border-l-4 border-indigo-500 rounded-lg shadow-sm">
+    <div class="flex items-start">
+        <span class="text-3xl text-indigo-500 mr-4">“</span>
+        <div>
+            <p class="text-lg font-medium text-slate-700 dark:text-slate-200">
+                {{ $quote }}
+            </p>
+            <p class="mt-1 text-xs font-bold text-indigo-400 uppercase tracking-widest">
+                — {{ $author }}
+            </p>
+        </div>
+    </div>
+</div>
+
 <div x-data="{ 
     drawerOpen: false, 
     activeTask: null,
@@ -176,7 +191,7 @@
 <script>
     document.addEventListener('alpine:init', () => {
     Alpine.directive('sortable', (el) => {
-        let localOldStatus = ''; // Define it here
+        let localOldStatus = ''; 
 
         new Sortable(el, {
             group: 'tasks', 
