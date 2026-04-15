@@ -68,40 +68,28 @@
     
     <div class="space-y-4">
         {{-- TO-DO --}}
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-slate-300"></div>
-                <span class="text-[11px] font-bold text-slate-500 uppercase">To-Do</span>
-            </div>
-            <span class="text-sm font-black text-slate-700">{{ $todoCount }}</span>
-        </div>
+       <div class="flex justify-between items-center">
+    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">TO-DO</span>
+    <span id="stat-todo" class="text-sm font-black text-slate-700">2</span>
+</div>
 
         {{-- ACTIVE --}}
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-200"></div>
-                <span class="text-[11px] font-bold text-slate-500 uppercase">Active</span>
-            </div>
-            <span class="text-sm font-black text-slate-700">{{ $activeCount }}</span>
-        </div>
+        <div class="flex justify-between items-center">
+    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">ACTIVE</span>
+    <span id="stat-in_progress" class="text-sm font-black text-slate-700">1</span>
+</div>
 
         {{-- REVIEW --}}
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-amber-400"></div>
-                <span class="text-[11px] font-bold text-slate-500 uppercase">Review</span>
-            </div>
-            <span class="text-sm font-black text-slate-700">{{ $reviewCount }}</span>
-        </div>
+        <div class="flex justify-between items-center">
+    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">REVIEW</span>
+    <span id="stat-review" class="text-sm font-black text-slate-700">0</span>
+</div>
 
         {{-- COMPLETED --}}
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span class="text-[11px] font-bold text-slate-500 uppercase">Completed</span>
-            </div>
-            <span class="text-sm font-black text-slate-700">{{ $doneCount }}</span>
-        </div>
+        <div class="flex justify-between items-center">
+    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">COMPLETED</span>
+    <span id="stat-done" class="text-sm font-black text-slate-700">1</span>
+</div>
     </div>
 </div>
 
@@ -287,13 +275,13 @@
             const doneTasks = {{ $projects->flatMap->tasks->where('status', 'done')->count() }};
             const pendingTasks = {{ $projects->flatMap->tasks->where('status', '!=', 'done')->count() }};
 
-            new Chart(ctx, {
+            window.globalTaskChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Completed', 'Pending'],
                     datasets: [{
                         data: [doneTasks, pendingTasks],
-                        backgroundColor: ['#4f46e5', '#e2e8f0'],
+                        backgroundColor: ['#4f46e5', '#f8fafc'],
                         borderWidth: 0
                     }]
                 },

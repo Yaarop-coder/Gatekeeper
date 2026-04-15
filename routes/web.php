@@ -24,6 +24,8 @@ Route::middleware('auth')->group(function () {
 
     // Tasks (Fixed the name here to match your Blade component)
     Route::post('projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+    Route::patch('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::get('/projects/{project}/export', [ProjectController::class, 'exportPDF'])
     ->name('projects.export')
     ->middleware(['auth', 'can:view,project']);

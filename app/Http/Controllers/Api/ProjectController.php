@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\Storage;
 class ProjectController extends Controller
 {
     use AuthorizesRequests;
-    /**
-     * Display the main dashboard.
-     */
+
     public function index()
 {
     $user = auth()->user();
@@ -62,9 +60,6 @@ class ProjectController extends Controller
     return view('projects.index', compact('stats', 'activities', 'users', 'projects', 'quote', 'author'));
 }
 
-    /**
-     * Save a new project.
-     */
     public function store(Request $request)
 {
     // 1. Validate (Crucial!)
@@ -92,9 +87,36 @@ class ProjectController extends Controller
     return back()->with('success', 'Project created with cover!');
 }
 
-    /**
-     * View a single project detail.
-     */
+    public function update(Request $request, Project $project)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    $data = $request->only('name');
+
+    if ($request->hasFile('cover_image')) {
+        // Store the new image
+        $path = $request->file('cover_image')->store('projects', 'public');
+        $data['cover_image'] = $path;
+    }
+
+    $project->update($data);
+
+    return redirect()->route('projects.index')->with('success', 'Project updated!');
+}
+
+    public function edit(Project $project)
+{
+    // Ensure the user owns this project (Multi-tenancy check)
+    if ($project->tenant_id !== auth()->user()->tenant_id) {
+        abort(403);
+    }
+
+    return view('projects.edit', compact('project'));
+}
+
     public function show(Project $project)
     {
         $user = auth()->user();
@@ -111,9 +133,6 @@ class ProjectController extends Controller
         return view('projects.show', compact('project', 'team'));
     }
 
-    /**
-     * Remove a project.
-     */
     public function destroy(Project $project)
 {
     // This automatically checks the ProjectPolicy 'delete' method

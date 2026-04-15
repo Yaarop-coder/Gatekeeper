@@ -12,16 +12,16 @@ class Task extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
-        'project_id',
-        'title',
-        'description',
-        'status',
-        'priority',
-        'assigned_to',
-        'is_completed',
-        'due_at',
-    ];
+    'tenant_id',
+    'project_id',
+    'title',
+    'description',
+    'status',
+    'priority',
+    'assigned_to_id',
+    'is_completed',
+    'due_at',
+];
 
     protected $casts = [
         'due_at' => 'datetime',
@@ -101,4 +101,8 @@ class Task extends Model
 
         return strtoupper(substr($this->name, 0, 2));
     }
+    public function assignedUser()
+{
+    return $this->belongsTo(User::class, 'assigned_to_id');
+}
 }

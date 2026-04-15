@@ -34,26 +34,30 @@
 
             {{-- Right: User Profile & Logout --}}
             <div class="flex items-center gap-6">
-                <div class="flex items-center gap-3 pr-6 border-r border-slate-100">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-xs font-black text-slate-800 uppercase tracking-tight">{{ Auth::user()->name }}</p>
-                        <p class="text-[10px] font-bold text-indigo-500 uppercase">{{ Auth::user()->role ?? 'Member' }}</p>
-                    </div>
-                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md border-2 border-white">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                    </div>
-                </div>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="group flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors">
-                        <span class="text-[10px] font-black uppercase tracking-widest">Logout</span>
-                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                    </button>
-                </form>
+    @auth
+        {{-- Move your User Profile & Logout code inside here --}}
+        <div class="flex items-center gap-3 pr-6 border-r border-slate-100">
+            <div class="text-right hidden sm:block">
+                <p class="text-xs font-black text-slate-800 uppercase tracking-tight">{{ Auth::user()->name }}</p>
+                <p class="text-[10px] font-bold text-indigo-500 uppercase">{{ Auth::user()->role }}</p>
             </div>
+            <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md border-2 border-white">
+                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="group flex items-center gap-2 text-slate-400 hover:text-red-500">
+                <span class="text-[10px] font-black uppercase tracking-widest">Logout</span>
+            </button>
+        </form>
+    @else
+        {{-- Show this if they are NOT logged in (Registration/Login pages) --}}
+        <a href="{{ route('login') }}" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600">Login</a>
+        <a href="{{ route('register') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md">Join GK</a>
+    @endauth
+</div>
         </div>
     </nav>
 

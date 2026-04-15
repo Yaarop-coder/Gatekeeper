@@ -12,17 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
+            // Add the description column
             $table->text('description')->nullable()->after('title');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            //
+            $table->dropColumn('description');
         });
     }
 };
