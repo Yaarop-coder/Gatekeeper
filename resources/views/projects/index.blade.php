@@ -53,20 +53,57 @@
     <div class="max-w-[98%] mx-auto px-2 md:px-6 grid grid-cols-12 gap-4 lg:gap-8">            
         {{-- SIDEBAR --}}
         <aside class="col-span-12 lg:col-span-3 space-y-6">
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm sticky top-6">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 text-center">Live Productivity</h3>
-                <div class="space-y-4">
-                    @foreach(['todo' => ['bg-slate-300', 'To-Do'], 'in_progress' => ['bg-indigo-500', 'Active'], 'review' => ['bg-amber-400', 'Review'], 'done' => ['bg-emerald-500', 'Completed']] as $key => $meta)
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 rounded-full {{ $meta[0] }}"></div>
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-tight">{{ $meta[1] }}</span>
-                        </div>
-                        <span id="stat-{{ $key }}" class="text-sm font-black text-slate-700">{{ $stats[$key] ?? 0 }}</span>
-                    </div>
-                    @endforeach
-                </div>
+            @php
+    // Get all tasks for the current tenant's projects
+    $allTasks = $projects->flatMap->tasks;
+    
+    $todoCount = $allTasks->whereIn('status', ['todo', 'backlog'])->count();
+    $activeCount = $allTasks->where('status', 'in_progress')->count();
+    $reviewCount = $allTasks->where('status', 'review')->count();
+    $doneCount = $allTasks->where('status', 'done')->count();
+@endphp
+
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest text-center mb-6">Live Productivity</p>
+    
+    <div class="space-y-4">
+        {{-- TO-DO --}}
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+                <span class="text-[11px] font-bold text-slate-500 uppercase">To-Do</span>
             </div>
+            <span class="text-sm font-black text-slate-700">{{ $todoCount }}</span>
+        </div>
+
+        {{-- ACTIVE --}}
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-200"></div>
+                <span class="text-[11px] font-bold text-slate-500 uppercase">Active</span>
+            </div>
+            <span class="text-sm font-black text-slate-700">{{ $activeCount }}</span>
+        </div>
+
+        {{-- REVIEW --}}
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+                <span class="text-[11px] font-bold text-slate-500 uppercase">Review</span>
+            </div>
+            <span class="text-sm font-black text-slate-700">{{ $reviewCount }}</span>
+        </div>
+
+        {{-- COMPLETED --}}
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span class="text-[11px] font-bold text-slate-500 uppercase">Completed</span>
+            </div>
+            <span class="text-sm font-black text-slate-700">{{ $doneCount }}</span>
+        </div>
+    </div>
+</div>
 
             <div class="space-y-3">
                 <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-2">Recent Events</h3>
@@ -82,9 +119,54 @@
         </aside>
 
         {{-- MAIN BOARD --}}
-        <main class="col-span-12 lg:col-span-9 space-y-8 pb-20">
-            <x-project-list :projects="$projects" />
-        </main>
+<main class="col-span-12 lg:col-span-9 space-y-8 pb-20">
+    
+    {{-- Put the Form Here - Styled to match --}}
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Create New Project</h3>
+        <form action="{{ route('projects.store') }}" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row gap-4 items-end">
+            @csrf
+            <div class="flex-1 w-full">
+                <input type="text" name="name" placeholder="Project Name..." required 
+                       class="w-full bg-slate-50 border-slate-100 rounded-xl text-sm px-4 py-2 border outline-none focus:ring-2 focus:ring-indigo-500/20">
+            </div>
+            
+            <div class="flex gap-2">
+                <label class="cursor-pointer bg-slate-100 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all border border-slate-200">
+                    <span>📷 Cover</span>
+                    <input type="file" name="cover_image" class="hidden" accept="image/*">
+                </label>
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md">
+                    Create
+                </button>
+            </div>
+        </form>
+    </div>
+    @if(auth()->user()->role === 'owner')
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    {{-- Total Projects Card --}}
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Total Projects</p>
+        <h3 class="text-3xl font-black text-slate-800">{{ $projects->count() }}</h3>
+    </div>
+
+    {{-- Task Completion Chart Card --}}
+    <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div class="space-y-1">
+            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Productivity</p>
+            <h3 class="text-xl font-black text-slate-800">Task Overview</h3>
+            <p class="text-xs text-slate-400 italic">Across all active projects</p>
+        </div>
+        
+        {{-- The Canvas for our Chart --}}
+        <div class="w-32 h-32">
+            <canvas id="globalTaskChart"></canvas>
+        </div>
+    </div>
+</div>
+@endif
+    <x-project-list :projects="$projects" />
+</main>
     </div>
 
     {{-- TASK DRAWER OVERLAY --}}
@@ -188,54 +270,39 @@
 </div> 
 
 @push('scripts')
-<script>
-    document.addEventListener('alpine:init', () => {
-    Alpine.directive('sortable', (el) => {
-        let localOldStatus = ''; 
-
-        new Sortable(el, {
-            group: 'tasks', 
-            animation: 150,
-            ghostClass: 'bg-indigo-50',
-            
-            onStart: (evt) => {
-                localOldStatus = evt.from.getAttribute('data-status');
-            },
-
-            onEnd: (evt) => {
-    const taskId = evt.item.getAttribute('data-id');
-    const newStatus = evt.to.getAttribute('data-status');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]');
-
-    if (!csrfToken) {
-        console.error('CSRF Token missing! Add <meta name="csrf-token"> to your layout.');
-        return;
-    }
-
-    if (!taskId || !newStatus || localOldStatus === newStatus) return;
-
-    fetch(`/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrfToken.content 
-        },
-        body: JSON.stringify({ status: newStatus })
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log('Saved successfully');
-        } else {
-            console.error('Save failed');
-            window.location.reload(); 
-        }
-    })
-    .catch(err => console.error('Error:', err));
-}
+    {{-- YOUR EXISTING SORTABLE SCRIPT (Keep this for the Board) --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.directive('sortable', (el) => {
+                // ... all your sortable logic ...
+            });
         });
-    });
-});
-</script>
+    </script>
+
+    {{-- MY NEW CHART SCRIPT (Add this for the Analytics) --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('globalTaskChart').getContext('2d');
+            
+            const doneTasks = {{ $projects->flatMap->tasks->where('status', 'done')->count() }};
+            const pendingTasks = {{ $projects->flatMap->tasks->where('status', '!=', 'done')->count() }};
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Pending'],
+                    datasets: [{
+                        data: [doneTasks, pendingTasks],
+                        backgroundColor: ['#4f46e5', '#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+    </script>
 @endpush
 @endsection

@@ -36,6 +36,7 @@ class RegisterTenantController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => bcrypt($data['password']),
+                'role' => 'owner', // They created the tenant, so they own it!
             ]);
 
             return response()->json([

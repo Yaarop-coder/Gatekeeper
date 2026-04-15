@@ -45,5 +45,12 @@ class TenantSeeder extends Seeder
             'password' => Hash::make('password'),
             'tenant_id' => $tenant->id,
         ]);
+        $user = User::create([
+    'name' => 'Admin User',
+    'email' => 'admin@example.com',
+    'password' => bcrypt('password'),
+    'tenant_id' => $tenant->id,
+    'role' => 'owner', // <--- Add this line!
+]);
     }
 }
