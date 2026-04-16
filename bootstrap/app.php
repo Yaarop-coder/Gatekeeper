@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ADD THIS: It forces our check to happen AFTER the session is started
         $middleware->web(append: [
             IdentifyTenant::class,
+            \App\Http\Middleware\SetLocale::class
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

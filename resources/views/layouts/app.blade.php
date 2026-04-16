@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
+      dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <style>
@@ -45,13 +47,20 @@
                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
             </div>
         </div>
+        {{-- Language Switcher --}}
+<div class="flex items-center gap-2 px-4 border-r border-slate-100 mr-4">
+    <a href="{{ route('lang.switch', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'text-indigo-600 font-black' : 'text-slate-400' }} text-[10px] tracking-widest">EN</a>
+    <span class="text-slate-200">|</span>
+    <a href="{{ route('lang.switch', 'ar') }}" class="{{ app()->getLocale() == 'ar' ? 'text-indigo-600 font-black' : 'text-slate-400' }} text-[10px] tracking-widest font-arabic">عربي</a>
+</div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="group flex items-center gap-2 text-slate-400 hover:text-red-500">
-                <span class="text-[10px] font-black uppercase tracking-widest">Logout</span>
-            </button>
-        </form>
+{{-- Logout Form --}}
+<form method="POST" action="{{ route('logout') }}">
+    @csrf
+    <button type="submit" class="group flex items-center gap-2 text-slate-400 hover:text-red-500">
+        <span class="text-[10px] font-black uppercase tracking-widest">{{ __('Logout') }}</span>
+    </button>
+</form>
     @else
         {{-- Show this if they are NOT logged in (Registration/Login pages) --}}
         <a href="{{ route('login') }}" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600">Login</a>
@@ -67,5 +76,16 @@
     </div>
 
     @stack('scripts')
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3"></div>
+
+<template id="toast-template">
+    <div class="flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl transform translate-y-10 opacity-0 transition-all duration-500 ease-out border border-white/10">
+        <div class="bg-green-500 p-1 rounded-full">
+            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <p class="text-xs font-bold tracking-wide uppercase">Task Updated</p>
+    </div>
+</template>
 </body>
 </html>
