@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ProjectPolicy
 {
@@ -36,20 +35,20 @@ class ProjectPolicy
      * Determine whether the user can update the model.
      */
     public function update(User $user, Project $project): bool
-{
-    // Owners and Admins can edit projects, but members can't
-    return $user->tenant_id === $project->tenant_id && in_array($user->role, ['owner', 'admin']);
-}
+    {
+        // Owners and Admins can edit projects, but members can't
+        return $user->tenant_id === $project->tenant_id && in_array($user->role, ['owner', 'admin']);
+    }
 
     /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Project $project): bool
-{
-    // 1. Must belong to the same tenant (Our security base)
-    // 2. Must be the 'owner' to delete a project
-    return $user->tenant_id === $project->tenant_id && $user->role === 'owner';
-}
+    {
+        // 1. Must belong to the same tenant (Our security base)
+        // 2. Must be the 'owner' to delete a project
+        return $user->tenant_id === $project->tenant_id && $user->role === 'owner';
+    }
 
     /**
      * Determine whether the user can restore the model.

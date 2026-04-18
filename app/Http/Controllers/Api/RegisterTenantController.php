@@ -13,7 +13,7 @@ class RegisterTenantController extends Controller
 {
     public function __invoke(Request $request)
     {
-        // 1. Validation (Always protect your house)
+        // 1. Validation 
         $data = $request->validate([
             'company_name' => 'required|string|max:255',
             'name' => 'required|string|max:255',
@@ -21,7 +21,7 @@ class RegisterTenantController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        // 2. The Transaction (The All-or-Nothing block)
+        // 2. The Transaction 
         return DB::transaction(function () use ($data) {
 
             // Create the Tenant

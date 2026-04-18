@@ -6,7 +6,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'description', 'tenant_id','cover_image'])]
+#[Fillable(['name', 'description', 'tenant_id', 'cover_image'])]
 class Project extends Model
 {
     use BelongsToTenant;

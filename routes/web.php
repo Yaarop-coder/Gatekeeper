@@ -27,8 +27,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::patch('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::get('/projects/{project}/export', [ProjectController::class, 'exportPDF'])
-    ->name('projects.export')
-    ->middleware(['auth', 'can:view,project']);
+        ->name('projects.export')
+        ->middleware(['auth', 'can:view,project']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
@@ -51,6 +51,7 @@ Route::get('lang/{locale}', function ($locale) {
     if (in_array($locale, ['en', 'ar'])) {
         session()->put('locale', $locale);
     }
+
     return redirect()->back();
 })->name('lang.switch');
 

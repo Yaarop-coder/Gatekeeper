@@ -10,17 +10,17 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        // We add the column and default it to 'member'
-        $table->string('role')->default('member')->after('tenant_id');
-    });
-}
+    {
+        Schema::table('users', function (Blueprint $table) {
+            // We add the column and default it to 'member'
+            $table->string('role')->default('member')->after('tenant_id');
+        });
+    }
 
-public function down(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->dropColumn('role');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('role');
+        });
+    }
 };

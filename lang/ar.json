@@ -40,8 +40,19 @@
     "High": "عالية",
     "Low": "منخفضة",
     "Tasks": "المهام",
-    "Priority":"الأولوية",
     "Notes & Description":"ملاحظات و وصف",
-    "moved task to": "قام بنقل المهمة إلى"
-
+    "moved task to": "قام بنقل المهمة إلى",
+    "moved_task_log": "قام :user بنقل المهمة :task إلى :status",
+    "IN_PROGRESS": "قيد التنفيذ",
+    "moved task": "قام بنقل المهمة",
+    "to": "إلى",
+    "delete task":"حذف المهمة",
+    "Discussion":"مناقشة",
+    "Delete Task": "حذف المهمة",
+    "Update Task": "تحديث المهمة",
+    "Task ID": "رقم المهمة",
+    "Priority": "الأولوية",
+    "Notes and Description": "ملاحظات ووصف",
+    "Add a comment": "أضف تعليق...",
+    "Are you sure you want to delete this task?": "هل أنت متأكد من حذف هذه المهمة؟"
 }

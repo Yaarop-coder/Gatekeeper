@@ -14,10 +14,11 @@ class SetLocale
      * @param  Closure(Request): (Response)  $next
      */
     public function handle($request, Closure $next)
-{
-    if (session()->has('locale')) {
-        app()->setLocale(session()->get('locale'));
+    {
+        if (session()->has('locale')) {
+            app()->setLocale(session()->get('locale'));
+        }
+
+        return $next($request);
     }
-    return $next($request);
-}
 }

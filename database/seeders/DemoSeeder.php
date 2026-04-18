@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Tenant;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str; 
+use Illuminate\Support\Facades\Hash;
 
 class DemoSeeder extends Seeder
 {
@@ -21,7 +20,7 @@ class DemoSeeder extends Seeder
         $tenant = Tenant::create([
             'id' => 1,
             'name' => 'Apple Inc.',
-            'slug' => 'apple-inc', 
+            'slug' => 'apple-inc',
         ]);
 
         // 2. Create the Owner User
@@ -31,9 +30,9 @@ class DemoSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'owner',
             'tenant_id' => $tenant->id,
-    ]);
+        ]);
 
-    auth()->login($owner);
+        auth()->login($owner);
 
         // 3. Create a Demo Project
         $project = Project::create([
@@ -51,17 +50,17 @@ class DemoSeeder extends Seeder
         ];
 
         foreach ($tasks as $taskData) {
-    Task::withoutEvents(function () use ($taskData, $project, $tenant, $owner) {
-        Task::create([
-            'title'          => $taskData['title'],
-            'status'         => $taskData['status'],
-            'priority'       => $taskData['priority'],
-            'project_id'     => $project->id,
-            'tenant_id'      => $tenant->id,
-            'assigned_to_id' => $owner->id,
-            'description'    => 'Demo task'
-        ]);
-    });
+            Task::withoutEvents(function () use ($taskData, $project, $tenant, $owner) {
+                Task::create([
+                    'title' => $taskData['title'],
+                    'status' => $taskData['status'],
+                    'priority' => $taskData['priority'],
+                    'project_id' => $project->id,
+                    'tenant_id' => $tenant->id,
+                    'assigned_to_id' => $owner->id,
+                    'description' => 'Demo task',
+                ]);
+            });
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
