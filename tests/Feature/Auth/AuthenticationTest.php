@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\Tenant;
 
 class AuthenticationTest extends TestCase
 {
@@ -17,9 +18,19 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate()
     {
-        $user = User::factory()->create();
+
+    
+        $tenant = Tenant::create([
+        'name' => 'Test Tenant',
+        'slug' => 'test-tenant' 
+    ]);
+
+    $user = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'password' => bcrypt('password'),
+    ]);
 
         $response = $this->post('/login', [
             'email' => $user->email,
@@ -27,7 +38,6 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

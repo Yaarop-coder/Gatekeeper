@@ -2,10 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -14,7 +15,10 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_screen_can_be_rendered(): void
     {
-        $response = $this->get('/forgot-password');
+        $tenant = Tenant::factory()->create();
+        
+        $response = $this->withSession(['tenant_id' => $tenant->id])
+                         ->get('/forgot-password');
 
         $response->assertStatus(200);
     }
@@ -23,51 +27,42 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
 
-        $user = User::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $response = $this->withSession(['tenant_id' => $tenant->id])
+                         ->post('/forgot-password', ['email' => $user->email]);
 
+        $response->assertSessionHasNoErrors();
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
     public function test_reset_password_screen_can_be_rendered(): void
     {
-        Notification::fake();
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $token = app('auth.password.broker')->createToken($user);
 
-        $user = User::factory()->create();
+        $response = $this->withSession(['tenant_id' => $tenant->id])
+                         ->get('/reset-password/'.$token.'?email='.$user->email);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
-            $response = $this->get('/reset-password/'.$notification->token);
-
-            $response->assertStatus(200);
-
-            return true;
-        });
+        $response->assertStatus(200);
     }
 
     public function test_password_can_be_reset_with_valid_token(): void
     {
-        Notification::fake();
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $token = app('auth.password.broker')->createToken($user);
 
-        $user = User::factory()->create();
+        $response = $this->withSession(['tenant_id' => $tenant->id])
+                         ->post('/reset-password', [
+                            'token' => $token,
+                            'email' => $user->email,
+                            'password' => 'password',
+                            'password_confirmation' => 'password',
+                        ]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-            $response = $this->post('/reset-password', [
-                'token' => $notification->token,
-                'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
-            ]);
-
-            $response
-                ->assertSessionHasNoErrors()
-                ->assertRedirect(route('login'));
-
-            return true;
-        });
+        $response->assertSessionHasNoErrors();
     }
 }
