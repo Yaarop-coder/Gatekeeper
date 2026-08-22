@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: gatekeeper-app
+    env: php
+    plan: free # Or your preferred plan
+    buildCommand: composer install --no-dev --optimize-autoloader && php artisan filament:upgrade # if using Filament
+    startCommand: php artisan migrate --force && apache2-foreground
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: DB_CONNECTION
+        value: pgsql # Render provides PostgreSQL
+      - key: SESSION_DRIVER
+        value: database # CRITICAL for multi-tenancy consistency
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gatekeeper-db
+          property: connectionString
+
+databases:
+  - name: gatekeeper-db
+    plan: free

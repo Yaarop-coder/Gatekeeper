@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 // Redirect the landing page to projects if logged in
 Route::get('/', function () {
-    return auth()->check() ? redirect('/projects') : view('welcome');
+    return auth()->check() ? redirect('/register') : view('welcome');
 });
 
 // The Breeze Dashboard

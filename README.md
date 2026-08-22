@@ -13,6 +13,7 @@ Gatekeeper isn't just translated; it's **localized** for global use.
 
 ## ✨ Key Features
 - **Interactive Kanban & List Views:** Manage tasks with a fluid, reactive UI.
+- **Authentication:** Full guest/user flow including password resets.
 - **Task Drawer:** A slide-out management panel for editing, deleting, and commenting.
 - **Live Productivity Analytics:** Real-time stats and progress tracking.
 - **Confetti Celebrations:** Visual feedback upon task completion.
@@ -23,6 +24,9 @@ Built for the modern web, Gatekeeper provides a structured API layer:
 - **RESTful Endpoints:** Full CRUD capabilities for tasks and projects.
 - **Secure Auth:** Powered by Laravel Sanctum for token-based authentication.
 - **Developer Ready:** Optimized JSON responses designed for mobile or third-party integrations.
+
+## 🧪 Testing
+The test suite is configured for a multi-tenant environment using an in-memory SQLite database.
 
 ## 🛠️ Tech Stack
 - **Backend:** Laravel 11
